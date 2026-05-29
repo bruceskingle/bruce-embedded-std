@@ -11,6 +11,9 @@ croner = "3.0.1"
 indexmap = "2.13.0"
 heapless = "0.9.1"
 embedded-graphics = "0.8"
+rgb = "0.8.53"
+
+feature-config-derive = { path = "../feature-config-derive"}
 
 [dev-dependencies]
 env_logger = "0.11.10"
