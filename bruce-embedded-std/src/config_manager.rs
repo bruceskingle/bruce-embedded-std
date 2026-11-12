@@ -209,7 +209,7 @@ impl ConfigManager {
             resp.write(format!(r#"<h1>Settings</h1>{}"#, config_manager_clone.about_html()).as_bytes())?;
             resp.write(
                 r#"
-                        <p>An app, such as Marco Sparko, manages this device and changes its settings.</p>
+                        <p>An app, such as Bruce's Smart Home, manages this device and changes its settings.</p>
                         <p>To manage it here again, release it in the app, or hold its BOOT button for 5 seconds.</p>
                         <p><a href="/">Home</a></p>
                     </div>

@@ -17,7 +17,7 @@ impl TestTask {
 }
 
 impl ScheduledTask<TestPlatform> for TestTask {
-    fn run(&mut self, _sparko_embedded: &mut TestPlatform) -> anyhow::Result<()> {
+    fn run(&mut self, _platform: &mut TestPlatform) -> anyhow::Result<()> {
         log::info!("TestTask: {}", self.name);
         Ok(())
     }

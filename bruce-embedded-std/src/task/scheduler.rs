@@ -7,7 +7,7 @@ use log::info;
 use crate::platform::Platform;
 
 pub trait ScheduledTask<S: Platform> {
-    fn run(&mut self, sparko_embedded: &mut S) -> anyhow::Result<()>;
+    fn run(&mut self, platform: &mut S) -> anyhow::Result<()>;
     fn name(&self) -> &str;
 }
 
@@ -64,7 +64,7 @@ impl<S: Platform> TaskScheduler<S> {
         TaskSchedulerBuilder::new()
     }
 
-    pub fn run(&mut self, sparko_embedded: &mut S) -> anyhow::Result<()> {
+    pub fn run(&mut self, platform: &mut S) -> anyhow::Result<()> {
         info!("Starting task manager with {} tasks", self.tasks.len());
         if self.tasks.is_empty() {
             anyhow::bail!("No tasks to run.");
@@ -120,7 +120,7 @@ impl<S: Platform> TaskScheduler<S> {
                 now = Utc::now();
             }
             // log::info!("Running task: {} due at {:?}", self.tasks[next_task_id].task.name(), self.tasks[next_task_id].next_event);
-            if let Err(error) = self.tasks[next_task_id].task.run(sparko_embedded) {
+            if let Err(error) = self.tasks[next_task_id].task.run(platform) {
                 log::error!("Error running task {}: {}", self.tasks[next_task_id].task.name(), error);
             }
             // Update next event after running
@@ -154,9 +154,9 @@ impl<S: Platform> TaskScheduler<S> {
 mod tests {
     use super::*;
 
-    struct MockSparko {}
+    struct MockPlatform {}
 
-    impl Platform for MockSparko {}
+    impl Platform for MockPlatform {}
 
     struct MockTask {}
 
@@ -167,8 +167,8 @@ mod tests {
     }
 
     // Only implement Task for tests
-    impl ScheduledTask<MockSparko> for MockTask {
-        fn run(&mut self, _sparko_embedded: &mut MockSparko) -> anyhow::Result<()> {
+    impl ScheduledTask<MockPlatform> for MockTask {
+        fn run(&mut self, _platform: &mut MockPlatform) -> anyhow::Result<()> {
             Ok(())
         }
 
@@ -186,7 +186,7 @@ mod tests {
 
         #[test]
         fn test_new_task_manager() {
-            let manager: TaskScheduler<MockSparko> = TaskScheduler::builder().build();
+            let manager: TaskScheduler<MockPlatform> = TaskScheduler::builder().build();
             assert_eq!(manager.tasks.len(), 0);
         }
 

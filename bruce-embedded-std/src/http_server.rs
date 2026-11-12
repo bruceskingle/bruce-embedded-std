@@ -62,7 +62,7 @@ pub trait HttpServerManager {
             &[("Content-Type", "text/css")],
             Box::new(|resp| {
             resp.write(r#"
-/* Dark, as the Marco Sparko app is, and for a phone first: one column, fields the width of the screen. */
+/* Dark, as Bruce's Smart Home is, and for a phone first: one column, fields the width of the screen. */
 :root {
   color-scheme: dark;
   --bg: #0f1116;
