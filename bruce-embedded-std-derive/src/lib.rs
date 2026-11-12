@@ -37,7 +37,9 @@ use syn::{
 ///
 /// # Example
 ///
-/// ```rust
+/// In a crate which uses bruce-embedded-std, whose types it names:
+///
+/// ```ignore
 /// const SSID_LEN: usize = 32;
 ///
 /// #[derive(FeatureConfig)]
@@ -560,7 +562,7 @@ fn emit_to_with(kind: &FieldKind, key: &str, secret: bool, label: Option<syn::Li
                 Some(preview) => quote! { Some(#preview) },
                 None => quote! { None },
             };
-            quote! { Some(sparko_embedded_std::config::Slider {
+            quote! { Some(bruce_embedded_std::config::Slider {
                 min: (#min) as i64, max: (#max) as i64, default: (#default) as i64, preview: #preview,
             }) }
         }

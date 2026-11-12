@@ -1,7 +1,11 @@
 [package]
-name = "sparko-embedded-std"
+name = "bruce-embedded-std"
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Bruce's Standard Library Embedded Platform: the hardware agnostic part of a platform for embedded applications, with Features, their settings and a config page"
+repository = "https://github.com/bruceskingle/bruce-embedded-std"
+readme = "../README.md"
 
 [dependencies]
 log = "0.4"
@@ -19,7 +23,8 @@ simple-dns = "0.11.2"
 ahrs = { version = "0.8.0", features = ["field_access"], optional = true }
 nalgebra = { version = "0.34.2", optional = true }
 
-feature-config-derive = { path = "../feature-config-derive"}
+# The derive macro for Features' settings, released with this crate.
+bruce-embedded-std-derive = { version = "0.1.0", path = "../bruce-embedded-std-derive" }
 
 [features]
 # The attitude and heading from an IMU's readings, see ahrs.rs.

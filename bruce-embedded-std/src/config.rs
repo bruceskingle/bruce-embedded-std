@@ -6,7 +6,7 @@ use rgb::RGB8;
 use std::str::FromStr;
 
 use crate::{problem::ProblemId, tz::TimeZone};
-pub use feature_config_derive::FeatureConfig;
+pub use bruce_embedded_std_derive::FeatureConfig;
 
 pub fn parse_rgb8(hex_str: &str) -> anyhow::Result<RGB8> {
     let hex_str = hex_str.trim_start_matches('#');

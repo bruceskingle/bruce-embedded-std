@@ -115,6 +115,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 
 [[package]]
+name = "bruce-embedded-std"
+version = "0.1.0"
+dependencies = [
+ "ahrs",
+ "anyhow",
+ "bruce-embedded-std-derive",
+ "chrono",
+ "croner",
+ "embedded-graphics",
+ "env_logger",
+ "heapless",
+ "indexmap",
+ "log",
+ "nalgebra",
+ "rgb",
+ "serde_json",
+ "simple-dns",
+]
+
+[[package]]
+name = "bruce-embedded-std-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -301,15 +330,6 @@ name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
-
-[[package]]
-name = "feature-config-derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "find-msvc-tools"
@@ -869,26 +889,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a75cbde1bf934313596a004973e462f9a82caa814dcf1a5f507bdf51597eeb4"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "sparko-embedded-std"
-version = "0.1.0"
-dependencies = [
- "ahrs",
- "anyhow",
- "chrono",
- "croner",
- "embedded-graphics",
- "env_logger",
- "feature-config-derive",
- "heapless",
- "indexmap",
- "log",
- "nalgebra",
- "rgb",
- "serde_json",
- "simple-dns",
 ]
 
 [[package]]
