@@ -94,8 +94,12 @@ impl ConfigManager {
                     EnabledState::Required => json!("required"),
                     enabled => json!(enabled.is_enabled()),
                 };
-                let settings: Vec<Value> =
-                    config.spec.map.iter().map(|(name, setting)| setting_json(name, setting)).collect();
+                let settings: Vec<Value> = config
+                    .spec
+                    .map
+                    .iter()
+                    .map(|(name, setting)| setting_json(name, setting))
+                    .collect();
                 json!({ "name": feature.name, "label": config.spec.label, "enabled": enabled, "settings": settings })
             })
             .collect();
@@ -255,17 +259,25 @@ mod tests {
             Ok(())
         }
 
-        fn handle_command(&self, _resp: &mut dyn std::io::Write, _form: IndexMap<String, String>, _config_manager: &ConfigManager)
-            -> anyhow::Result<()>
-        {
+        fn handle_command(
+            &self,
+            _resp: &mut dyn std::io::Write,
+            _form: IndexMap<String, String>,
+            _config_manager: &ConfigManager,
+        ) -> anyhow::Result<()> {
             Ok(())
         }
     }
 
     /// A device with a feature, Gateway, which is disabled and has a required setting, host, which has never been set.
     fn new_device() -> ConfigManager {
-        let mut builder = ConfigManager::builder(Box::new(Factory), ProblemManager::new(), Arc::new(Mutex::new(false)), Box::new(NoCommands))
-            .unwrap();
+        let mut builder = ConfigManager::builder(
+            Box::new(Factory),
+            ProblemManager::new(),
+            Arc::new(Mutex::new(false)),
+            Box::new(NoCommands),
+        )
+        .unwrap();
         let host = ConfigSpecValue {
             value: TypedValue::String(64, None),
             required: true,
@@ -275,7 +287,15 @@ mod tests {
             slider: None,
         };
         let config = ConfigSpec::builder().with("host".to_string(), host).unwrap().build();
-        builder.add_feature(FeatureDescriptor { name: "Gateway".to_string(), config }, false).unwrap();
+        builder
+            .add_feature(
+                FeatureDescriptor {
+                    name: "Gateway".to_string(),
+                    config,
+                },
+                false,
+            )
+            .unwrap();
         builder.build()
     }
 
@@ -286,7 +306,9 @@ mod tests {
     #[test]
     fn enabling_a_feature_whose_required_setting_was_never_set_is_refused() {
         let device = new_device();
-        let error = device.apply_json(&json!({ "features": { "Gateway": { "enabled": true } } })).unwrap_err();
+        let error = device
+            .apply_json(&json!({ "features": { "Gateway": { "enabled": true } } }))
+            .unwrap_err();
         assert_eq!(format!("{error:#}"), "Gateway host is required");
         assert!(!enabled(&device));
     }
@@ -294,7 +316,10 @@ mod tests {
     #[test]
     fn enabling_a_feature_with_its_required_setting_given_at_the_same_time_is_saved() {
         let device = new_device();
-        device.apply_json(&json!({ "features": { "Gateway": { "enabled": true, "settings": { "host": "192.168.4.2" } } } }))
+        device
+            .apply_json(
+                &json!({ "features": { "Gateway": { "enabled": true, "settings": { "host": "192.168.4.2" } } } }),
+            )
             .unwrap();
         assert!(enabled(&device));
         assert_eq!(device.value("Gateway", "host").as_deref(), Some("192.168.4.2"));

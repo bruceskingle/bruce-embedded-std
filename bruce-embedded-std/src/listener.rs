@@ -12,7 +12,7 @@ pub struct ListenerManager<T> {
 impl<T> ListenerManager<T> {
     pub fn new() -> Self {
         Self {
-            listeners: Mutex::new(Vec::new())
+            listeners: Mutex::new(Vec::new()),
         }
     }
 
@@ -23,9 +23,7 @@ impl<T> ListenerManager<T> {
     pub fn remove_listener(&self, listener: &Arc<dyn Listener<T>>) {
         self.listeners.lock().unwrap().retain(|weak| {
             // Keep if: still alive AND not the one we're removing
-            weak.upgrade()
-                .map(|arc| !Arc::ptr_eq(&arc, listener))
-                .unwrap_or(false) // drop dead listeners too
+            weak.upgrade().map(|arc| !Arc::ptr_eq(&arc, listener)).unwrap_or(false) // drop dead listeners too
         });
     }
 

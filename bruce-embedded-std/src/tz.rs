@@ -64,7 +64,6 @@ pub enum TimeZone {
     Utc,
 }
 
-
 pub const ALL: &'static [TimeZone] = &[
     // Europe
     TimeZone::EuropeLondon,
@@ -72,40 +71,33 @@ pub const ALL: &'static [TimeZone] = &[
     TimeZone::EuropeParis,
     TimeZone::EuropeMadrid,
     TimeZone::EuropeRome,
-
     // USA
     TimeZone::AmericaNewYork,
     TimeZone::AmericaChicago,
     TimeZone::AmericaDenver,
     TimeZone::AmericaLosAngeles,
-
     // Canada
     TimeZone::AmericaToronto,
     TimeZone::AmericaVancouver,
-
     // Australia
     TimeZone::AustraliaSydney,
     TimeZone::AustraliaMelbourne,
     TimeZone::AustraliaBrisbane,
-
     // New Zealand
     TimeZone::PacificAuckland,
-
     // Asia
     TimeZone::AsiaTokyo,
     TimeZone::AsiaShanghai,
     TimeZone::AsiaKolkata,
     TimeZone::AsiaSingapore,
     TimeZone::AsiaDubai,
-
     // South America
     TimeZone::AmericaSaoPaulo,
-
     // UTC
     TimeZone::Utc,
 ];
 
-impl /*ConfigSerializable for*/ TimeZone {
+impl TimeZone {
     pub fn iter() -> impl Iterator<Item = &'static TimeZone> {
         ALL.iter()
     }
@@ -116,24 +108,20 @@ impl /*ConfigSerializable for*/ TimeZone {
             TimeZone::EuropeLondon => "GMT0BST,M3.5.0/1,M10.5.0/2",
 
             // 🇪🇺
-            TimeZone::EuropeBerlin
-            | TimeZone::EuropeParis
-            | TimeZone::EuropeMadrid
-            | TimeZone::EuropeRome => "CET-1CEST,M3.5.0/2,M10.5.0/3",
+            TimeZone::EuropeBerlin | TimeZone::EuropeParis | TimeZone::EuropeMadrid | TimeZone::EuropeRome => {
+                "CET-1CEST,M3.5.0/2,M10.5.0/3"
+            }
 
             // 🇺🇸
-            TimeZone::AmericaNewYork
-            | TimeZone::AmericaToronto => "EST5EDT,M3.2.0/2,M11.1.0/2",
+            TimeZone::AmericaNewYork | TimeZone::AmericaToronto => "EST5EDT,M3.2.0/2,M11.1.0/2",
 
             TimeZone::AmericaChicago => "CST6CDT,M3.2.0/2,M11.1.0/2",
-            TimeZone::AmericaDenver  => "MST7MDT,M3.2.0/2,M11.1.0/2",
+            TimeZone::AmericaDenver => "MST7MDT,M3.2.0/2,M11.1.0/2",
 
-            TimeZone::AmericaLosAngeles
-            | TimeZone::AmericaVancouver => "PST8PDT,M3.2.0/2,M11.1.0/2",
+            TimeZone::AmericaLosAngeles | TimeZone::AmericaVancouver => "PST8PDT,M3.2.0/2,M11.1.0/2",
 
             // 🇦🇺
-            TimeZone::AustraliaSydney
-            | TimeZone::AustraliaMelbourne => "AEST-10AEDT,M10.1.0/2,M4.1.0/3",
+            TimeZone::AustraliaSydney | TimeZone::AustraliaMelbourne => "AEST-10AEDT,M10.1.0/2,M4.1.0/3",
 
             TimeZone::AustraliaBrisbane => "AEST-10",
 
@@ -233,6 +221,3 @@ impl /*ConfigSerializable for*/ TimeZone {
         }
     }
 }
-
-
-

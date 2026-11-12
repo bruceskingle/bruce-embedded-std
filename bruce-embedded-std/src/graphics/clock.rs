@@ -234,11 +234,7 @@ where
                 &DrawMode::Erase,
                 Self::hour_minute_to_angle(self.hour, self.minute),
             )?;
-            self.draw_min_hand(
-                target,
-                &DrawMode::Erase,
-                Self::sexagesimal_to_angle(self.minute),
-            )?;
+            self.draw_min_hand(target, &DrawMode::Erase, Self::sexagesimal_to_angle(self.minute))?;
         }
 
         if second != self.second {
@@ -246,18 +242,10 @@ where
             // Self::draw_hand(manager.display(), &self.clock_face, self.bg_color, 3, seconds_radians, -11).anyhow()?;
             // Self::draw_second_decoration(manager.display(), &self.clock_face, self.bg_color, self.bg_color, seconds_radians, -30).anyhow()?;
 
-            self.draw_sec_hand(
-                target,
-                &DrawMode::Erase,
-                Self::sexagesimal_to_angle(self.second),
-            )?;
+            self.draw_sec_hand(target, &DrawMode::Erase, Self::sexagesimal_to_angle(self.second))?;
         }
 
-        self.draw_hour_hand(
-            target,
-            &DrawMode::Draw,
-            Self::hour_minute_to_angle(hour, minute),
-        )?;
+        self.draw_hour_hand(target, &DrawMode::Draw, Self::hour_minute_to_angle(hour, minute))?;
         self.draw_min_hand(target, &DrawMode::Draw, Self::sexagesimal_to_angle(minute))?;
         self.draw_sec_hand(target, &DrawMode::Draw, Self::sexagesimal_to_angle(second))?;
 
@@ -321,11 +309,7 @@ where
     /// The angle is relative to the 12 o'clock position and the radius is relative to the edge of the
     /// clock face.
     fn polar(&self, angle: f32, radius: f32) -> Point {
-        self.clock_face.center()
-            + Point::new(
-                (angle.sin() * radius) as i32,
-                -(angle.cos() * radius) as i32,
-            )
+        self.clock_face.center() + Point::new((angle.sin() * radius) as i32, -(angle.cos() * radius) as i32)
     }
 
     /// Converts an hour into an angle in radians.
@@ -373,10 +357,7 @@ where
             // End point offset by 10 pixels from the edge.
             let end = self.polar(angle, self.tick_start);
 
-            Line::new(start, end)
-                .into_styled(style)
-                .draw(target)
-                .anyhow()?;
+            Line::new(start, end).into_styled(style).draw(target).anyhow()?;
         }
 
         Ok(())
@@ -440,13 +421,7 @@ where
         draw_mode: &DrawMode,
         angle: f32,
     ) -> anyhow::Result<()> {
-        self.draw_hand(
-            target,
-            self.fg_color(draw_mode),
-            3,
-            angle,
-            self.hour_hand_len,
-        )
+        self.draw_hand(target, self.fg_color(draw_mode), 3, angle, self.hour_hand_len)
     }
 
     fn draw_min_hand(
@@ -455,13 +430,7 @@ where
         draw_mode: &DrawMode,
         angle: f32,
     ) -> anyhow::Result<()> {
-        self.draw_hand(
-            target,
-            self.fg_color(draw_mode),
-            2,
-            angle,
-            self.min_hand_len,
-        )
+        self.draw_hand(target, self.fg_color(draw_mode), 2, angle, self.min_hand_len)
     }
 
     fn draw_sec_hand(
@@ -470,13 +439,7 @@ where
         draw_mode: &DrawMode,
         angle: f32,
     ) -> anyhow::Result<()> {
-        self.draw_hand(
-            target,
-            self.fg_color(draw_mode),
-            1,
-            angle,
-            self.sec_hand_len,
-        )?;
+        self.draw_hand(target, self.fg_color(draw_mode), 1, angle, self.sec_hand_len)?;
         self.draw_second_decoration(target, draw_mode, angle, self.sec_dec_len)
     }
 

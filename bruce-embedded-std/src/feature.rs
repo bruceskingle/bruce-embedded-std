@@ -34,8 +34,7 @@ impl FeatureConfigHolder {
         config_store_factory: &Box<dyn ConfigStoreFactory>,
         internal: bool,
     ) -> anyhow::Result<Self> {
-        let config_store =
-            config_store_factory.create(feature_descriptor.name.clone(), internal)?;
+        let config_store = config_store_factory.create(feature_descriptor.name.clone(), internal)?;
 
         let enabled = if internal {
             EnabledState::Required
@@ -44,10 +43,7 @@ impl FeatureConfigHolder {
         };
 
         let mut spec = feature_descriptor.config;
-        info!(
-            "Loading feature {} config from NVS",
-            &feature_descriptor.name
-        );
+        info!("Loading feature {} config from NVS", &feature_descriptor.name);
         for (name, config_value) in spec.map.iter_mut() {
             //config_value.value =
             config_store.load(name, config_value);
@@ -71,19 +67,12 @@ impl FeatureConfigHolder {
         if inner.enabled.is_enabled() {
             for (name, config_value) in &inner.spec.map {
                 if config_value.required && config_value.value.is_none() {
-                    log::error!(
-                        "Missing required config value: {} in feature {}",
-                        name,
-                        self.name
-                    );
+                    log::error!("Missing required config value: {} in feature {}", name, self.name);
                     return false;
                 }
             }
         } else {
-            info!(
-                "Config for feature {} is not enabled and therefore valid",
-                self.name
-            );
+            info!("Config for feature {} is not enabled and therefore valid", self.name);
         }
         info!("Config for feature {} is valid", self.name);
         true
@@ -102,18 +91,10 @@ impl FeatureConfigHolder {
             // Required features are always enabled, so we just show the config page without a checkbox
             resp.write(format!(r#"<section class="feature"><h2>{feature_name}</h2>"#).as_bytes())?;
         } else {
-            info!(
-                "feature.enabled for {}: {}",
-                &self.name,
-                inner.enabled.is_enabled()
-            );
+            info!("feature.enabled for {}: {}", &self.name, inner.enabled.is_enabled());
 
             let name = format!("feature_{}", &self.name);
-            let checked = if inner.enabled.is_enabled() {
-                " checked"
-            } else {
-                ""
-            };
+            let checked = if inner.enabled.is_enabled() { " checked" } else { "" };
 
             resp.write(
                 format!(
@@ -170,7 +151,12 @@ impl FeatureConfigHolder {
                     &input_type_buf
                 }
                 TypedValue::Int32(_) | TypedValue::Int64(_) if config_value.slider.is_some() => {
-                    let Slider { min, max, default, preview } = config_value.slider.unwrap();
+                    let Slider {
+                        min,
+                        max,
+                        default,
+                        preview,
+                    } = config_value.slider.unwrap();
                     let value = match &config_value.value {
                         TypedValue::Int32(Some(value)) => *value as i64,
                         TypedValue::Int64(Some(value)) => *value,
@@ -182,14 +168,19 @@ impl FeatureConfigHolder {
                         Some(preview) => format!(r#" oninput="sliderMoved(this, '{preview}')""#),
                         None => r#" oninput="this.nextElementSibling.value = this.value""#.to_string(),
                     };
-                    resp.write(format!(r#"
+                    resp.write(
+                        format!(
+                            r#"
                         <!-- Slider field {name}-->
                         <label for="{name}">{label}</label>
                         <div class="form_row">
                         <input id="{name}" name="{name}" type="range" min="{min}" max="{max}" value="{value}"{oninput}>
                         <output for="{name}">{value}</output>
                         </div>
-            "#).as_bytes())?;
+            "#
+                        )
+                        .as_bytes(),
+                    )?;
                     if preview.is_some() {
                         resp.write(br#"
                         <script>
@@ -238,9 +229,7 @@ impl FeatureConfigHolder {
                         .as_bytes(),
                     )?;
                     let selected_attr = if opt_tz.is_none() { " selected" } else { "" };
-                    resp.write(
-                        format!(r#"<option value=""{selected_attr}>None</option>"#).as_bytes(),
-                    )?;
+                    resp.write(format!(r#"<option value=""{selected_attr}>None</option>"#).as_bytes())?;
 
                     for tz in TimeZone::iter() {
                         let selected_attr = if let Some(current) = opt_tz {
@@ -306,11 +295,16 @@ impl FeatureConfigHolder {
                     continue;
                 }
             };
-            resp.write(format!(r#"
+            resp.write(
+                format!(
+                    r#"
                         <!-- Other field {name}-->
                         <label for="{name}">{label}</label>
                         <input id="{name}" name="{name}" type="{input_type}" autocomplete="off" value="{value}">
-            "#).as_bytes())?;
+            "#
+                )
+                .as_bytes(),
+            )?;
         }
         resp.write(b"</section>")?;
 

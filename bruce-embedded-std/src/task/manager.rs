@@ -1,4 +1,7 @@
-use std::{sync::mpsc::{self, Receiver, Sender}, time::Duration};
+use std::{
+    sync::mpsc::{self, Receiver, Sender},
+    time::Duration,
+};
 
 pub type ProcessId = usize;
 
@@ -28,13 +31,13 @@ pub enum ObservedProcessStatus {
     Starting,
     Running,
     Delayed,
-    Dead
+    Dead,
 }
 
 pub enum TaskControlMessage {
     Shutdown,
     Quiesce,
-    Start
+    Start,
 }
 
 pub enum DeclaredTaskStatus {
@@ -46,7 +49,10 @@ pub enum DeclaredTaskStatus {
 }
 
 pub enum TaskStatusMessage {
-    ProcessStatus{pid: ProcessId, status: DeclaredProcessStatus},
+    ProcessStatus {
+        pid: ProcessId,
+        status: DeclaredProcessStatus,
+    },
     TaskStatus(DeclaredTaskStatus),
 }
 
@@ -76,9 +82,7 @@ pub struct MasterControlProgramBuilder {
 
 impl MasterControlProgramBuilder {
     fn new() -> MasterControlProgramBuilder {
-        MasterControlProgramBuilder {
-            tasks: Vec::new(),
-        }
+        MasterControlProgramBuilder { tasks: Vec::new() }
     }
 
     pub fn add_task(&mut self, task: Box<dyn ThreadTask>, config: TaskConfig) -> anyhow::Result<()> {
@@ -108,9 +112,7 @@ impl MasterControlProgramBuilder {
     pub fn build(mut self) -> MasterControlProgram {
         self.tasks.shrink_to_fit();
 
-        MasterControlProgram {
-            tasks: self.tasks,
-        }
+        MasterControlProgram { tasks: self.tasks }
     }
 }
 

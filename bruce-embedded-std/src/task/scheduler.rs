@@ -26,11 +26,7 @@ impl<S: Platform> TaskSchedulerBuilder<S> {
         Self { tasks: Vec::new() }
     }
 
-    pub fn add_task(
-        &mut self,
-        task: Box<dyn ScheduledTask<S>>,
-        schedule_spec: &str,
-    ) -> anyhow::Result<()> {
+    pub fn add_task(&mut self, task: Box<dyn ScheduledTask<S>>, schedule_spec: &str) -> anyhow::Result<()> {
         let schedule = Cron::from_str(schedule_spec)?;
         // We are doing this here to validate the schedule spec early and avoid adding tasks with invalid schedules to the manager
         let next_event = schedule.find_next_occurrence(&Utc::now(), false)?;
@@ -48,11 +44,7 @@ impl<S: Platform> TaskSchedulerBuilder<S> {
         Ok(())
     }
 
-    pub fn with_task(
-        mut self,
-        task: Box<dyn ScheduledTask<S>>,
-        schedule_spec: &str,
-    ) -> anyhow::Result<Self> {
+    pub fn with_task(mut self, task: Box<dyn ScheduledTask<S>>, schedule_spec: &str) -> anyhow::Result<Self> {
         self.add_task(task, schedule_spec)?;
         Ok(self)
     }
@@ -129,11 +121,7 @@ impl<S: Platform> TaskScheduler<S> {
             }
             // log::info!("Running task: {} due at {:?}", self.tasks[next_task_id].task.name(), self.tasks[next_task_id].next_event);
             if let Err(error) = self.tasks[next_task_id].task.run(sparko_embedded) {
-                log::error!(
-                    "Error running task {}: {}",
-                    self.tasks[next_task_id].task.name(),
-                    error
-                );
+                log::error!("Error running task {}: {}", self.tasks[next_task_id].task.name(), error);
             }
             // Update next event after running
             match self.tasks[next_task_id]

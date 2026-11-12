@@ -1,11 +1,14 @@
 //! Attitude and Heading Reference System: the attitude and tilt worked out from an IMU's readings, whatever the chip,
 //! which a platform reads through the Imu trait, e.g. bruce-esp-idf's QMI8658.
- 
-use std::{sync::{Arc, RwLock}, time::{Duration, Instant}};
-use ahrs::Madgwick;
+
 use ahrs::Ahrs;
+use ahrs::Madgwick;
 use log::info;
 use nalgebra::{UnitQuaternion, Vector3};
+use std::{
+    sync::{Arc, RwLock},
+    time::{Duration, Instant},
+};
 
 pub const DEG_TO_RAD: f32 = std::f32::consts::PI / 180.0;
 
@@ -17,23 +20,22 @@ pub trait Gyro: Send + Sync {
     }
 }
 
-
 #[derive(Debug, Clone)]
 /// A reading from an IMU, which its platform's driver makes, e.g. bruce-esp-idf's QMI8658: the gyroscope's in degrees a
 /// second, and the accelerometer's in g.
 pub struct ImuReading {
-        pub gyroscope: Vector3<f32>,
-        pub accelerometer: Vector3<f32>,
+    pub gyroscope: Vector3<f32>,
+    pub accelerometer: Vector3<f32>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Calibration {
-        gyroscope_deg: Vector3<f32>,
-        gyroscope_rad: Vector3<f32>,
-        accelerometer: UnitQuaternion<f32>,
-        magnetometer: Vector3<f32>,
-        pitch: f32,
-        roll: f32,
+    gyroscope_deg: Vector3<f32>,
+    gyroscope_rad: Vector3<f32>,
+    accelerometer: UnitQuaternion<f32>,
+    magnetometer: Vector3<f32>,
+    pitch: f32,
+    roll: f32,
 }
 impl Calibration {
     fn new() -> Self {
@@ -54,13 +56,12 @@ pub trait Imu: Gyro {
     fn read_imu_rad(&self) -> anyhow::Result<ImuReading> {
         let deg = self.read_imu_deg()?;
         let gyroscope = deg.gyroscope * DEG_TO_RAD;
-        
-        
+
         // let g2 = Vector3::new(deg.gyroscope[0].to_radians(),
         //     deg.gyroscope[1].to_radians(), deg.gyroscope[2].to_radians());
-        
+
         // info!("deg={:?} gyro={:?} g2={:?}", deg.gyroscope, gyroscope, g2);
-        Ok(ImuReading{
+        Ok(ImuReading {
             gyroscope,
             accelerometer: deg.accelerometer,
         })
@@ -73,12 +74,11 @@ impl<T: Imu> Gyro for T {
     }
 }
 
-
 #[derive(Clone)]
 pub struct AhuReading {
-        gyroscope: Vector3<f32>,
-        accelerometer: Vector3<f32>,
-        magnetometer: Vector3<f32>,
+    gyroscope: Vector3<f32>,
+    accelerometer: Vector3<f32>,
+    magnetometer: Vector3<f32>,
 }
 
 pub trait Ahu: Imu {
@@ -86,7 +86,7 @@ pub trait Ahu: Imu {
 
     fn read_ahu_rad(&self) -> anyhow::Result<AhuReading> {
         let deg = self.read_ahu_deg()?;
-        Ok(AhuReading{
+        Ok(AhuReading {
             gyroscope: deg.gyroscope * DEG_TO_RAD,
             accelerometer: deg.accelerometer,
             magnetometer: deg.magnetometer,
@@ -122,7 +122,6 @@ pub struct Tilt {
     pub raw_pitch: f32,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Attitude {
     pub roll: f32,
@@ -132,18 +131,17 @@ pub struct Attitude {
 
 #[derive(Debug, Copy, Clone)]
 pub struct InternalState {
-#[cfg(feature = "ahrs")]
+    #[cfg(feature = "ahrs")]
     quaternion: UnitQuaternion<f32>,
-#[cfg(feature = "tilt")]
+    #[cfg(feature = "tilt")]
     pub raw_pitch: f32,
-#[cfg(feature = "tilt")]
+    #[cfg(feature = "tilt")]
     pub raw_roll: f32,
-#[cfg(feature = "tilt")]
+    #[cfg(feature = "tilt")]
     pub smoothed_pitch: f32,
-#[cfg(feature = "tilt")]
+    #[cfg(feature = "tilt")]
     pub smoothed_roll: f32,
 }
-
 
 // #[cfg(all(feature = "ahrs", not(feature = "tilt")))]
 // #[derive(Debug, Copy, Clone)]
@@ -155,15 +153,15 @@ pub struct InternalState {
 impl InternalState {
     fn new() -> InternalState {
         InternalState {
-#[cfg(feature = "ahrs")]
+            #[cfg(feature = "ahrs")]
             quaternion: UnitQuaternion::identity(),
-#[cfg(feature = "tilt")]
+            #[cfg(feature = "tilt")]
             raw_pitch: 0.0,
-#[cfg(feature = "tilt")]
+            #[cfg(feature = "tilt")]
             raw_roll: 0.0,
-#[cfg(feature = "tilt")]
+            #[cfg(feature = "tilt")]
             smoothed_pitch: 0.0,
-#[cfg(feature = "tilt")]
+            #[cfg(feature = "tilt")]
             smoothed_roll: 0.0,
         }
     }
@@ -176,11 +174,10 @@ enum Mode {
     Ahrs(Arc<dyn Ahu>),
 }
 
-pub struct ImuManager
-{
-    mode:           Mode,
-    state:          Arc<RwLock<InternalState>>,
-    calibration:    Calibration,
+pub struct ImuManager {
+    mode: Mode,
+    state: Arc<RwLock<InternalState>>,
+    calibration: Calibration,
 }
 
 impl ImuManager {
@@ -205,15 +202,14 @@ impl ImuManager {
         manager
     }
 
-#[cfg(feature = "ahrs")]
+    #[cfg(feature = "ahrs")]
     pub fn read_attitude(&self) -> Attitude {
         let state = *self.state.read().unwrap();
 
         // Rotate by inverse of reference to get relative orientation
         let relative = self.calibration.accelerometer * state.quaternion;
 
-        let (roll, pitch, yaw) =
-                relative.euler_angles();
+        let (roll, pitch, yaw) = relative.euler_angles();
 
         Attitude {
             roll: roll.to_degrees(),
@@ -222,7 +218,7 @@ impl ImuManager {
         }
     }
 
-#[cfg(feature = "tilt")]
+    #[cfg(feature = "tilt")]
     pub fn read_tilt(&self) -> Tilt {
         let state = *self.state.read().unwrap();
 
@@ -252,7 +248,7 @@ impl ImuManager {
                     Err(error) => log::error!("IMU update task FAILED with {:?}.", error),
                 };
             })?;
-        
+
         Ok(())
     }
 
@@ -268,25 +264,28 @@ impl ImuManager {
 
             match &self.mode {
                 Mode::Gyro(gyro) => {
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     let reading_deg = gyro.read_gyro_deg()?;
                     let reading = gyro.read_gyro_rad()?;
 
                     calibration.gyroscope_deg += reading_deg;
                     calibration.gyroscope_rad += reading;
-                },
+                }
                 Mode::Imu(imu) => {
-
-                        let reading = imu.read_imu_rad()?;
-#[cfg(feature = "tilt")]
+                    let reading = imu.read_imu_rad()?;
+                    #[cfg(feature = "tilt")]
                     {
-                        let raw_pitch = reading.accelerometer.x.atan2((reading.accelerometer.y * reading.accelerometer.y + reading.accelerometer.z * reading.accelerometer.z).sqrt());
-                        let raw_roll  = reading.accelerometer.y.atan2(reading.accelerometer.z);
+                        let raw_pitch = reading.accelerometer.x.atan2(
+                            (reading.accelerometer.y * reading.accelerometer.y
+                                + reading.accelerometer.z * reading.accelerometer.z)
+                                .sqrt(),
+                        );
+                        let raw_roll = reading.accelerometer.y.atan2(reading.accelerometer.z);
                         calibration.roll += raw_roll;
                         calibration.pitch += raw_pitch;
                     }
 
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     {
                         let reading_deg = imu.read_imu_deg()?;
 
@@ -313,21 +312,24 @@ impl ImuManager {
                         }
                     }
 
-
                     info!("read={:?} calibration={:?}", reading, calibration);
-                },
+                }
                 Mode::Ahrs(ahu) => {
                     let reading = ahu.read_ahu_rad()?;
 
-#[cfg(feature = "tilt")]
+                    #[cfg(feature = "tilt")]
                     {
-                        let raw_pitch = reading.accelerometer.x.atan2((reading.accelerometer.y * reading.accelerometer.y + reading.accelerometer.z * reading.accelerometer.z).sqrt());
-                        let raw_roll  = reading.accelerometer.y.atan2(reading.accelerometer.z);
+                        let raw_pitch = reading.accelerometer.x.atan2(
+                            (reading.accelerometer.y * reading.accelerometer.y
+                                + reading.accelerometer.z * reading.accelerometer.z)
+                                .sqrt(),
+                        );
+                        let raw_roll = reading.accelerometer.y.atan2(reading.accelerometer.z);
                         calibration.roll += raw_roll;
                         calibration.pitch += raw_pitch;
                     }
 
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     {
                         let reading_deg = ahu.read_ahu_deg()?;
 
@@ -354,64 +356,56 @@ impl ImuManager {
                             min.z = reading_deg.gyroscope.z;
                         }
                     }
-                },
+                }
             }
-            
-            
 
             let elapsed = now.elapsed();
 
             if elapsed < update_frequency {
-                std::thread::sleep(
-                    update_frequency - elapsed
-                );
+                std::thread::sleep(update_frequency - elapsed);
             }
         }
 
         // For the moment I am just averaging the magnetometer but this is not what we really need.
         match &self.mode {
             Mode::Gyro(_gyro) => {
-#[cfg(feature = "ahrs")]
+                #[cfg(feature = "ahrs")]
                 {
                     calibration.gyroscope_deg /= samples as f32;
                     calibration.gyroscope_rad /= samples as f32;
                 }
-            },
+            }
             Mode::Imu(imu) => {
-#[cfg(feature = "ahrs")]
+                #[cfg(feature = "ahrs")]
                 {
                     calibration.gyroscope_deg /= samples as f32;
                     calibration.gyroscope_rad /= samples as f32;
-                    
+
                     Self::calibrate_accelerometer(update_frequency, &mut calibration, &**imu)?;
                 }
 
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 {
                     calibration.roll /= samples as f32;
                     calibration.pitch /= samples as f32;
                 }
-            },
+            }
             Mode::Ahrs(ahu) => {
-
-#[cfg(feature = "ahrs")]
+                #[cfg(feature = "ahrs")]
                 {
                     calibration.gyroscope_deg /= samples as f32;
                     calibration.gyroscope_rad /= samples as f32;
                     calibration.magnetometer /= samples as f32;
-                    
+
                     Self::calibrate_accelerometer(update_frequency, &mut calibration, &**ahu)?;
                 }
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 {
                     calibration.roll /= samples as f32;
                     calibration.pitch /= samples as f32;
                 }
-            },
+            }
         }
-        
-
-
 
         info!("Done calibration={:?} min={:?} max={:?}", calibration, min, max);
 
@@ -419,9 +413,12 @@ impl ImuManager {
         Ok(())
     }
 
-
-#[cfg(feature = "ahrs")]
-    fn calibrate_accelerometer(update_frequency: Duration, calibration: &mut Calibration, imu: &dyn Imu) -> anyhow::Result<()> {
+    #[cfg(feature = "ahrs")]
+    fn calibrate_accelerometer(
+        update_frequency: Duration,
+        calibration: &mut Calibration,
+        imu: &dyn Imu,
+    ) -> anyhow::Result<()> {
         let mut filter = Madgwick::new(update_frequency.as_secs_f32(), 0.1f32);
         let mut last = Instant::now();
         let sample_cnt = 2.0 / update_frequency.as_secs_f32();
@@ -443,9 +440,7 @@ impl ImuManager {
             let elapsed = last.elapsed();
 
             if elapsed < update_frequency {
-                std::thread::sleep(
-                    update_frequency - elapsed
-                );
+                std::thread::sleep(update_frequency - elapsed);
             }
         }
 
@@ -454,12 +449,11 @@ impl ImuManager {
         Ok(())
     }
 
-#[cfg(feature = "ahrs")]
+    #[cfg(feature = "ahrs")]
     fn adaptive_beta(gyro: &Vector3<f32>, beta_min: f32, beta_max: f32) -> f32 {
         let gyro_norm = gyro.norm();
         let rest_threshold: f32 = 0.04;
         let motion_threshold: f32 = 0.4;
-       
 
         if gyro_norm < rest_threshold {
             beta_min
@@ -476,62 +470,55 @@ impl ImuManager {
         state: Arc<RwLock<InternalState>>,
         mode: Mode,
         calibration: Calibration,
-    ) -> anyhow::Result<()>{
+    ) -> anyhow::Result<()> {
         let alpha: f32 = 0.1;
 
-#[cfg(feature = "ahrs")]
+        #[cfg(feature = "ahrs")]
         let mut filter = Madgwick::new(update_frequency.as_secs_f32(), 0.1f32);
         let mut last = Instant::now();
         // let mut cnt = 0;
 
         let initial_state = *state.read().unwrap();
 
-#[cfg(feature = "tilt")]
+        #[cfg(feature = "tilt")]
         let mut smoothed_pitch = initial_state.smoothed_pitch;
-#[cfg(feature = "tilt")]
+        #[cfg(feature = "tilt")]
         let mut smoothed_roll = initial_state.smoothed_roll;
-
 
         loop {
             let now = Instant::now();
 
-            let dt =
-                now.duration_since(last)
-                    .as_secs_f32();
+            let dt = now.duration_since(last).as_secs_f32();
 
-#[cfg(feature = "ahrs")]
+            #[cfg(feature = "ahrs")]
             {
                 *filter.sample_period_mut() = dt;
             }
             last = now;
 
-            
             // cnt += 1;
 
             let mut raw_roll = 0.0_f32;
             let mut raw_pitch = 0.0_f32;
 
-#[cfg(feature = "ahrs")]
+            #[cfg(feature = "ahrs")]
             let q;
-            
+
             match &mode {
                 Mode::Gyro(gyro) => {
-
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     {
                         let mut reading = gyro.read_gyro_rad()?;
                         reading -= calibration.gyroscope_rad;
-                        q = filter.update_gyro(
-                            &reading,
-                        )
+                        q = filter.update_gyro(&reading)
                     }
-                },
+                }
                 Mode::Imu(imu) => {
                     let mut reading = imu.read_imu_rad()?;
                     // let raw_reading = reading.clone();
 
                     // if cnt >9 {
-                    //     info!("UPDATE RADS dt={} reading={:?}", 
+                    //     info!("UPDATE RADS dt={} reading={:?}",
                     //             dt,
                     //             &reading,
                     //             // &raw_reading,
@@ -539,82 +526,79 @@ impl ImuManager {
                     //     cnt = 0;
                     // }
 
-#[cfg(feature = "tilt")]
+                    #[cfg(feature = "tilt")]
                     {
-                        raw_pitch = reading.accelerometer.x.atan2((reading.accelerometer.y * reading.accelerometer.y + reading.accelerometer.z * reading.accelerometer.z).sqrt());
-                        raw_roll  = reading.accelerometer.y.atan2(reading.accelerometer.z);
+                        raw_pitch = reading.accelerometer.x.atan2(
+                            (reading.accelerometer.y * reading.accelerometer.y
+                                + reading.accelerometer.z * reading.accelerometer.z)
+                                .sqrt(),
+                        );
+                        raw_roll = reading.accelerometer.y.atan2(reading.accelerometer.z);
                     }
 
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     {
                         reading.gyroscope -= calibration.gyroscope_rad;
 
                         *filter.beta_mut() = Self::adaptive_beta(&reading.gyroscope, 0.033, 0.5);
 
-                        q = filter.update_imu(
-                            &reading.gyroscope,
-                            &reading.accelerometer
-                        ).anyhow()?;
+                        q = filter.update_imu(&reading.gyroscope, &reading.accelerometer).anyhow()?;
                     }
-                },
+                }
                 Mode::Ahrs(ahu) => {
                     let mut reading = ahu.read_ahu_rad()?;
 
-#[cfg(feature = "tilt")]
+                    #[cfg(feature = "tilt")]
                     {
-                        raw_pitch = reading.accelerometer.x.atan2((reading.accelerometer.y * reading.accelerometer.y + reading.accelerometer.z * reading.accelerometer.z).sqrt());
-                        raw_roll  = reading.accelerometer.y.atan2(reading.accelerometer.z);
+                        raw_pitch = reading.accelerometer.x.atan2(
+                            (reading.accelerometer.y * reading.accelerometer.y
+                                + reading.accelerometer.z * reading.accelerometer.z)
+                                .sqrt(),
+                        );
+                        raw_roll = reading.accelerometer.y.atan2(reading.accelerometer.z);
                     }
 
-#[cfg(feature = "ahrs")]
+                    #[cfg(feature = "ahrs")]
                     {
-                        
                         reading.gyroscope -= calibration.gyroscope_rad;
-                        q = filter.update(
-                            &reading.gyroscope,
-                            &reading.accelerometer,
-                            &reading.magnetometer
-                        ).anyhow()?;
+                        q = filter
+                            .update(&reading.gyroscope, &reading.accelerometer, &reading.magnetometer)
+                            .anyhow()?;
                     }
-                },
+                }
             };
 
-#[cfg(feature = "tilt")]
+            #[cfg(feature = "tilt")]
             {
                 raw_pitch -= calibration.pitch;
                 raw_roll -= calibration.roll;
 
                 smoothed_pitch = alpha * raw_pitch + (1.0 - alpha) * smoothed_pitch;
-                smoothed_roll  = alpha * raw_roll  + (1.0 - alpha) * smoothed_roll;
+                smoothed_roll = alpha * raw_roll + (1.0 - alpha) * smoothed_roll;
             }
 
             let new_state = InternalState {
-#[cfg(feature = "ahrs")]
+                #[cfg(feature = "ahrs")]
                 quaternion: q.clone(),
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 raw_pitch,
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 raw_roll,
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 smoothed_pitch,
-#[cfg(feature = "tilt")]
+                #[cfg(feature = "tilt")]
                 smoothed_roll,
             };
 
-             
-
             {
-                let mut s =
-                    state.write().unwrap();
+                let mut s = state.write().unwrap();
                 *s = new_state;
             }
 
             let elapsed = last.elapsed();
 
             if elapsed < update_frequency {
-                std::thread::sleep(
-                    update_frequency - elapsed
-                );
+                std::thread::sleep(update_frequency - elapsed);
             }
         }
     }

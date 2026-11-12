@@ -73,14 +73,20 @@ impl Console {
     /// How many characters fit across, and how many lines fit down, area, inside the margin.
     pub fn fit(&self, area: &embedded_graphics::primitives::Rectangle) -> (usize, usize) {
         let inside = |length: u32| length.saturating_sub(2 * self.margin);
-        ((inside(area.size.width) / self.character_width()).max(1) as usize, (inside(area.size.height) / self.line_height()) as usize)
+        (
+            (inside(area.size.width) / self.character_width()).max(1) as usize,
+            (inside(area.size.height) / self.line_height()) as usize,
+        )
     }
 }
 
 impl Default for Console {
     /// FONT_10X20, which is 24 characters across a 240 pixel screen, and 32 across 320.
     fn default() -> Self {
-        Console { font: &FONT_10X20, margin: 8 }
+        Console {
+            font: &FONT_10X20,
+            margin: 8,
+        }
     }
 }
 
@@ -120,11 +126,17 @@ pub trait DisplayManager {
         let area = display.bounding_box();
         let (across, down) = console.fit(&area);
         let top_left = area.top_left + Point::new(console.margin as i32, console.margin as i32);
-        let lines = wrap(title, across).into_iter().map(|line| (line, title_style))
-            .chain(details.iter().flat_map(|detail| wrap(detail, across)).map(|line| (line, detail_style)));
+        let lines = wrap(title, across).into_iter().map(|line| (line, title_style)).chain(
+            details
+                .iter()
+                .flat_map(|detail| wrap(detail, across))
+                .map(|line| (line, detail_style)),
+        );
         for (index, (line, style)) in lines.take(down).enumerate() {
             let position = top_left + Point::new(0, (index as u32 * console.line_height()) as i32);
-            Text::with_baseline(&line, position, style, Baseline::Top).draw(display).anyhow()?;
+            Text::with_baseline(&line, position, style, Baseline::Top)
+                .draw(display)
+                .anyhow()?;
         }
         Ok(())
     }
@@ -191,8 +203,14 @@ mod tests {
 
     #[test]
     fn wraps_between_words() {
-        assert_eq!(wrap("Join the Wi-Fi ESP32-Setup", 16), vec!["Join the Wi-Fi", "ESP32-Setup"]);
-        assert_eq!(wrap("http://192.168.4.1/config", 10), vec!["http://192", ".168.4.1/c", "onfig"]);
+        assert_eq!(
+            wrap("Join the Wi-Fi ESP32-Setup", 16),
+            vec!["Join the Wi-Fi", "ESP32-Setup"]
+        );
+        assert_eq!(
+            wrap("http://192.168.4.1/config", 10),
+            vec!["http://192", ".168.4.1/c", "onfig"]
+        );
         assert_eq!(wrap("", 10), Vec::<String>::new());
     }
 }

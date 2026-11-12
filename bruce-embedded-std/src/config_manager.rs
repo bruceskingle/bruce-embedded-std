@@ -43,14 +43,9 @@ impl ConfigManagerBuilder {
         })
     }
 
-    pub fn add_feature(
-        &mut self,
-        descriptor: FeatureDescriptor,
-        internal: bool,
-    ) -> anyhow::Result<(Config, bool)> {
+    pub fn add_feature(&mut self, descriptor: FeatureDescriptor, internal: bool) -> anyhow::Result<(Config, bool)> {
         log::info!("About to create config for feature: {}", &descriptor.name);
-        let feature_config =
-            FeatureConfigHolder::from_feature(descriptor, &self.config_store_factory, internal)?;
+        let feature_config = FeatureConfigHolder::from_feature(descriptor, &self.config_store_factory, internal)?;
         let feature_name = feature_config.name.clone();
         let config = feature_config.to_config();
         let valid = feature_config.is_valid();
@@ -118,7 +113,10 @@ impl ConfigManager {
 
     /// What the device is, as a paragraph under the /config page's heading, or nothing if it has not been set.
     fn about_html(&self) -> String {
-        self.about.get().map(|about| format!(r#"<p class="about">{about}</p>"#)).unwrap_or_default()
+        self.about
+            .get()
+            .map(|about| format!(r#"<p class="about">{about}</p>"#))
+            .unwrap_or_default()
     }
 
     pub fn set_managed(&self, managed: bool) {
@@ -161,10 +159,7 @@ impl ConfigManager {
         !ap_mode
     }
 
-    fn show_config_page(
-        config_manager_clone: &Arc<ConfigManager>,
-        resp: &mut dyn Write,
-    ) -> anyhow::Result<()> {
+    fn show_config_page(config_manager_clone: &Arc<ConfigManager>, resp: &mut dyn Write) -> anyhow::Result<()> {
         resp.write(
             r#"
                 <!DOCTYPE html>
@@ -182,10 +177,15 @@ impl ConfigManager {
 
         if !config_manager_clone.problem_manager.is_empty() {
             info!("Failure reason present, showing error message on config page");
-            resp.write(format!(r#"
+            resp.write(
+                format!(
+                    r#"
                     <div class="problems">
                         <strong>Problems</strong> <ul>
-                "#).as_bytes())?;
+                "#
+                )
+                .as_bytes(),
+            )?;
 
             for reason in &*config_manager_clone.problem_manager {
                 resp.write("<li>".as_bytes())?;
@@ -255,11 +255,7 @@ impl ConfigManager {
         Ok(())
     }
 
-    fn handle_command(
-        &self,
-        resp: &mut dyn Write,
-        form: IndexMap<String, String>,
-    ) -> anyhow::Result<()> {
+    fn handle_command(&self, resp: &mut dyn Write, form: IndexMap<String, String>) -> anyhow::Result<()> {
         // e.g. a factory reset, which would take the device off the Wi-Fi, see managed.
         if self.is_managed() && self.is_online() {
             anyhow::bail!("an app manages this device, so commands cannot be given here");

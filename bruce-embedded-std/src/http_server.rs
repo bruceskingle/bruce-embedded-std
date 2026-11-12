@@ -1,7 +1,6 @@
 use indexmap::IndexMap;
 use std::io::Write;
 
-
 /*
 The abstraction we have here provides a couple of wrapper methods which make it possible for code which is not dependent
 on the hardware specific implementation to create web pages which return a fixed status and headers and provide a closure
@@ -41,10 +40,7 @@ pub trait HttpServerManager {
     fn handle_post_form(
         &mut self,
         uri: &str,
-        f: Box<
-            dyn Fn(&mut dyn Write, IndexMap<String, String>) -> anyhow::Result<()>
-                + Send,
-        >,
+        f: Box<dyn Fn(&mut dyn Write, IndexMap<String, String>) -> anyhow::Result<()> + Send>,
     ) -> anyhow::Result<()>;
 
     fn handle_status(
@@ -56,11 +52,11 @@ pub trait HttpServerManager {
         headers: &'static [(&'static str, &'static str)],
         f: Box<dyn Fn(&mut dyn Write) -> anyhow::Result<()> + Send>,
     ) -> anyhow::Result<()>;
-    
+
     fn init_common_pages(&mut self) -> anyhow::Result<()> {
         self.handle_status(
-            "/main.css", 
-            HttpMethod::Get, 
+            "/main.css",
+            HttpMethod::Get,
             200,
             Some("OK"),
             &[("Content-Type", "text/css")],

@@ -1,6 +1,6 @@
-use log::info;
 use bruce_embedded_std::platform::Platform;
 use bruce_embedded_std::task::scheduler::{ScheduledTask, TaskScheduler};
+use log::info;
 
 struct TestPlatform {}
 

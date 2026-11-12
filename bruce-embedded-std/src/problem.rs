@@ -17,7 +17,7 @@ pub struct Problem {
 impl std::fmt::Display for Problem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data = self.data.lock().unwrap();
-        if ! data.is_clear {
+        if !data.is_clear {
             let manager_data = data.manager.data.lock().unwrap();
             if let Some(id) = data.id {
                 if let Some(message) = &manager_data.problems[id] {
@@ -25,12 +25,10 @@ impl std::fmt::Display for Problem {
                 } else {
                     write!(f, "No message")
                 }
-            }
-            else{
+            } else {
                 write!(f, "No message ID")
             }
-        }
-        else {
+        } else {
             Ok(())
         }
     }
@@ -59,14 +57,14 @@ impl Problem {
         data.is_clear = true;
     }
 
-     pub fn is_clear(&self) -> bool {
+    pub fn is_clear(&self) -> bool {
         let data = self.data.lock().unwrap();
         data.is_clear
     }
 
-     pub fn is_set(&self) -> bool {
+    pub fn is_set(&self) -> bool {
         let data = self.data.lock().unwrap();
-        ! data.is_clear
+        !data.is_clear
     }
 }
 
@@ -75,20 +73,17 @@ struct ProblemManagerData {
     active_cnt: usize,
 }
 pub struct ProblemManager {
-    data: Mutex<ProblemManagerData>
+    data: Mutex<ProblemManagerData>,
 }
 
 impl ProblemManager {
     pub fn new() -> Arc<Self> {
-        Arc::new(
-            ProblemManager {
-                data: Mutex::new(ProblemManagerData {
-                    problems: Vec::new(),
-                    active_cnt: 0,
-                    }
-                )
-            }
-        )
+        Arc::new(ProblemManager {
+            data: Mutex::new(ProblemManagerData {
+                problems: Vec::new(),
+                active_cnt: 0,
+            }),
+        })
     }
 
     pub fn is_empty(&self) -> bool {
@@ -109,17 +104,15 @@ impl ProblemManager {
             data.problems[idx] = Some(message);
 
             id
-        }
-        else {
+        } else {
             let new_id = data.problems.len();
 
             data.active_cnt += 1;
             info!("Problem {} set to {}, active_cnt={}", new_id, &message, data.active_cnt);
             data.problems.push(Some(message));
 
-
             Some(new_id)
-        }   
+        }
     }
 
     pub fn clear(&self, id: ProblemId) {
@@ -148,11 +141,12 @@ impl<'a> Iterator for ProblemIter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        info!("Problem Iterator.next(), active_cnt={} idx={}", self.guard.active_cnt, self.idx);
+        info!(
+            "Problem Iterator.next(), active_cnt={} idx={}",
+            self.guard.active_cnt, self.idx
+        );
         while self.idx < self.guard.problems.len() {
-            let item: &'a Option<String> = unsafe {
-                &*self.guard.problems.as_ptr().add(self.idx)
-            };
+            let item: &'a Option<String> = unsafe { &*self.guard.problems.as_ptr().add(self.idx) };
             self.idx += 1;
             if let Some(value) = item.as_deref() {
                 return Some(value);
@@ -186,7 +180,6 @@ mod tests {
         let problems: Vec<_> = manager.iter().collect();
         assert_eq!(problems, vec!["first problem", "third problem"]);
     }
-
 
     #[test]
     fn test_problem_manager_is_empty() {

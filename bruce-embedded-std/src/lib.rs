@@ -3,24 +3,22 @@ use std::time::Duration;
 
 use embedded_graphics::primitives::Rectangle;
 
-
-
-pub mod platform;
-pub mod tz;
-pub mod task;
-pub mod config;
-pub mod config_manager;
-mod config_json;
-pub mod problem;
-pub mod http_server;
-pub mod feature;
+#[cfg(any(feature = "tilt", feature = "ahrs"))]
+pub mod ahrs;
 pub mod command;
+pub mod config;
+mod config_json;
+pub mod config_manager;
+pub mod feature;
 pub mod graphics;
+pub mod http_server;
 pub mod listener;
 /// Answers mDNS queries for the device's .local name, on any platform with std's UDP sockets.
 pub mod mdns;
-#[cfg(any(feature = "tilt", feature = "ahrs"))]
-pub mod ahrs;
+pub mod platform;
+pub mod problem;
+pub mod task;
+pub mod tz;
 
 pub type Layout = fn(&Rectangle) -> Rectangle;
 
@@ -31,7 +29,6 @@ pub enum DisplayOrientation {
     Rotate180,
     Rotate270,
 }
-
 
 pub enum InitStatus {
     Starting,
@@ -45,7 +42,6 @@ pub enum Status {
     Setup,
     Error,
 }
-
 
 struct Shared<T> {
     config: T,
@@ -94,7 +90,7 @@ impl<T: Clone> WaitNotify<T> {
         let mut shared = self.shared.lock().unwrap();
 
         (shared, _) = self.notify.wait_timeout(shared, timeout).unwrap();
-        
+
         if shared.updated {
             shared.updated = false; // Reset the flag
             Some(shared.config.clone())

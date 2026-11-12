@@ -1,9 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{
-    parse_macro_input, Data, DeriveInput, Expr, Fields, GenericArgument, PathArguments, Type,
-};
+use syn::{parse_macro_input, Data, DeriveInput, Expr, Fields, GenericArgument, PathArguments, Type};
 
 /// Derive macro for `FeatureConfig`.
 ///
@@ -175,9 +173,17 @@ fn parse_slider_attr(field: &syn::Field) -> syn::Result<Option<SliderAttrs>> {
         })?;
     }
     match (min, max) {
-        (Some(min), Some(max)) => Ok(Some(SliderAttrs { min, max, default, preview })),
+        (Some(min), Some(max)) => Ok(Some(SliderAttrs {
+            min,
+            max,
+            default,
+            preview,
+        })),
         (None, None) if default.is_none() && preview.is_none() => Ok(None),
-        _ => Err(syn::Error::new_spanned(field, "a slider needs both `min = N` and `max = N`")),
+        _ => Err(syn::Error::new_spanned(
+            field,
+            "a slider needs both `min = N` and `max = N`",
+        )),
     }
 }
 
@@ -234,13 +240,11 @@ fn classify_type(ty: &Type, field: &syn::Field) -> syn::Result<TypeClass> {
             let last = segments.last().unwrap();
             if let PathArguments::AngleBracketed(ab) = &last.arguments {
                 let len_expr: Option<Expr> = match ab.args.first() {
-                    Some(GenericArgument::Type(Type::Path(inner_tp))) => {
-                        Some(Expr::Path(syn::ExprPath {
-                            attrs: vec![],
-                            qself: inner_tp.qself.clone(),
-                            path: inner_tp.path.clone(),
-                        }))
-                    }
+                    Some(GenericArgument::Type(Type::Path(inner_tp))) => Some(Expr::Path(syn::ExprPath {
+                        attrs: vec![],
+                        qself: inner_tp.qself.clone(),
+                        path: inner_tp.path.clone(),
+                    })),
                     Some(GenericArgument::Const(expr)) => Some(expr.clone()),
                     _ => None,
                 };
@@ -471,10 +475,7 @@ fn emit_from_extraction(field_ident: &syn::Ident, kind: &FieldKind, key: &str) -
             };
         },
 
-        FieldKind::Known {
-            kt,
-            optional: false,
-        } => {
+        FieldKind::Known { kt, optional: false } => {
             let (pattern, extraction) = match_arm_known(*kt);
             quote! {
                 let #field_ident = match spec.map.get(#key) {
@@ -513,50 +514,50 @@ fn emit_from_extraction(field_ident: &syn::Ident, kind: &FieldKind, key: &str) -
 /// All values are `None` — `to_config_spec` describes the schema, not an instance.
 /// For string fields the length expression is emitted as-is, so both literals
 /// and named constants work correctly.
-fn emit_to_with(kind: &FieldKind, key: &str, secret: bool, label: Option<syn::LitStr>, slider: Option<SliderAttrs>) -> TokenStream2 {
+fn emit_to_with(
+    kind: &FieldKind,
+    key: &str,
+    secret: bool,
+    label: Option<syn::LitStr>,
+    slider: Option<SliderAttrs>,
+) -> TokenStream2 {
     let typed_value_none = match kind {
         FieldKind::Str { len, .. } => quote! { TypedValue::String(#len, None) },
         FieldKind::Known {
-            kt: KnownType::Int32,
-            ..
+            kt: KnownType::Int32, ..
         } => quote! { TypedValue::Int32(None)    },
         FieldKind::Known {
-            kt: KnownType::Int64,
-            ..
+            kt: KnownType::Int64, ..
         } => quote! { TypedValue::Int64(None)    },
         FieldKind::Known {
-            kt: KnownType::Bool,
-            ..
+            kt: KnownType::Bool, ..
         } => quote! { TypedValue::Bool(None)     },
         FieldKind::Known {
             kt: KnownType::TimeZone,
             ..
         } => quote! { TypedValue::TimeZone(None) },
         FieldKind::Known {
-            kt: KnownType::Cron,
-            ..
+            kt: KnownType::Cron, ..
         } => quote! { TypedValue::Cron(None)     },
         FieldKind::Known {
-            kt: KnownType::Color,
-            ..
+            kt: KnownType::Color, ..
         } => quote! { TypedValue::Color(None)    },
     };
     let required = matches!(
         kind,
-        FieldKind::Str {
-            optional: false,
-            ..
-        } | FieldKind::Known {
-            optional: false,
-            ..
-        }
+        FieldKind::Str { optional: false, .. } | FieldKind::Known { optional: false, .. }
     );
     let label = match label {
         Some(label) => quote! { Some(#label) },
         None => quote! { None },
     };
     let slider = match slider {
-        Some(SliderAttrs { min, max, default, preview }) => {
+        Some(SliderAttrs {
+            min,
+            max,
+            default,
+            preview,
+        }) => {
             let default = default.unwrap_or_else(|| min.clone());
             let preview = match preview {
                 Some(preview) => quote! { Some(#preview) },
@@ -635,8 +636,19 @@ fn impl_feature_config(input: &DeriveInput) -> syn::Result<TokenStream2> {
         }
 
         let slider = parse_slider_attr(field)?;
-        if slider.is_some() && !matches!(kind, FieldKind::Known { kt: KnownType::Int32 | KnownType::Int64, .. }) {
-            return Err(syn::Error::new_spanned(field, "a slider, `min = N, max = N`, is only valid on `i32` or `i64` fields"));
+        if slider.is_some()
+            && !matches!(
+                kind,
+                FieldKind::Known {
+                    kt: KnownType::Int32 | KnownType::Int64,
+                    ..
+                }
+            )
+        {
+            return Err(syn::Error::new_spanned(
+                field,
+                "a slider, `min = N, max = N`, is only valid on `i32` or `i64` fields",
+            ));
         }
 
         from_extractions.push(emit_from_extraction(field_ident, &kind, &key));

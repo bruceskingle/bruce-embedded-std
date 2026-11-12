@@ -74,7 +74,7 @@ impl TypedValue {
             TypedValue::String(_len, val) => val.is_none(),
             TypedValue::Int32(val) => val.is_none(),
             TypedValue::Int64(val) => val.is_none(),
-            TypedValue::Bool(_) => false, // Bool is never None, it defaults to false
+            TypedValue::Bool(_) => false,     // Bool is never None, it defaults to false
             TypedValue::TimeZone(_) => false, // TimeZone is never None, it defaults to UTC
             TypedValue::Cron(val) => val.is_none(),
             TypedValue::Color(val) => val.is_none(),
@@ -148,10 +148,7 @@ impl Config {
         }
     }
 
-    pub fn get_required_as_heapless<const N: usize>(
-        &self,
-        key: &str,
-    ) -> anyhow::Result<heapless::String<N>> {
+    pub fn get_required_as_heapless<const N: usize>(&self, key: &str) -> anyhow::Result<heapless::String<N>> {
         if let Some(value) = self.spec.map.get(key) {
             Ok(value.value.to_heapless::<N>()?)
         } else {
@@ -283,7 +280,10 @@ impl ConfigSpecBuilder {
     pub fn build(mut self) -> ConfigSpec {
         self.map.shrink_to_fit();
 
-        ConfigSpec { map: self.map, label: self.label }
+        ConfigSpec {
+            map: self.map,
+            label: self.label,
+        }
     }
 }
 
@@ -329,12 +329,7 @@ pub trait ConfigStoreFactory {
 pub trait ConfigStore: Sync + Send {
     fn erase_all(&self) -> anyhow::Result<()>;
     fn load(&self, name: &str, config_value: &mut ConfigSpecValue);
-    fn save(
-        &self,
-        name: &str,
-        config_value: &mut ConfigSpecValue,
-        str_value: &str,
-    ) -> anyhow::Result<()>;
+    fn save(&self, name: &str, config_value: &mut ConfigSpecValue, str_value: &str) -> anyhow::Result<()>;
     fn remove(&self, name: &str, config_value: &mut ConfigSpecValue) -> anyhow::Result<()>;
     fn load_enabled_state(&self) -> anyhow::Result<EnabledState>;
     fn save_enabled_state(&self, enabled_state: EnabledState) -> anyhow::Result<()>;
@@ -382,14 +377,7 @@ mod tests {
     #[test]
     fn parse_rgb8_accepts_plain_hex_strings() {
         let color = parse_rgb8("ff00ff").expect("should parse magenta");
-        assert_eq!(
-            color,
-            RGB8 {
-                r: 255,
-                g: 0,
-                b: 255
-            }
-        );
+        assert_eq!(color, RGB8 { r: 255, g: 0, b: 255 });
     }
 
     #[test]
@@ -412,11 +400,7 @@ mod tests {
 
     #[test]
     fn format_and_parse_rgb8_roundtrip() {
-        let original = RGB8 {
-            r: 18,
-            g: 52,
-            b: 86,
-        };
+        let original = RGB8 { r: 18, g: 52, b: 86 };
         let formatted = format_rgb8(&original);
         let reparsed = parse_rgb8(&formatted).expect("roundtrip parse should succeed");
         assert_eq!(reparsed, original);
