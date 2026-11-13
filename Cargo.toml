@@ -1,0 +1,7 @@
+# The crates of Bruce's Standard Library Embedded Platform, released together, with the same version.
+[workspace]
+members = ["bruce-embedded-std", "bruce-embedded-std-derive"]
+resolver = "3"
+
+[workspace.metadata.bruce-method]
+kind = "crate"

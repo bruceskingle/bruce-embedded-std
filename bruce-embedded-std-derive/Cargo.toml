@@ -1,0 +1,15 @@
+[package]
+name = "bruce-embedded-std-derive"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "#[derive(FeatureConfig)] for bruce-embedded-std, which re-exports it"
+repository = "https://github.com/bruceskingle/bruce-embedded-std"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
