@@ -25,22 +25,21 @@ A number setting can be shown on the config page as a slider, with ```#[config(m
 The platform makes use of the builder pattern as a way of trying to get the best trade off between the cost and benefits of the standard library. Most of the platform types have a builder containing collections which allow items to be added, but the ```build()``` method will usually call ```.shrink_to_fit()``` on those collections which are then treated as immutable from that point onwards.
 
 The conventions for builders are that they
-- are constructed by calling the ```builder()``` associated function on the class being constructed, e.g. ```TaskManager::builder()```
-- provide chainable methods with names starting ```with_``` e.g. 
+- are constructed by calling the ```builder()``` associated function on the class being constructed, e.g. ```ConfigSpec::builder()```
+- provide chainable methods with names starting ```with``` e.g.
 ```
-    TaskManager::builder()
-        .with_task(task1)?
-        .with_task(task2)?
+    ConfigSpec::builder()
+        .with("ssid".to_string(), ssid)?
+        .with("wifi_password".to_string(), password)?
+        .with_label(Some("Wi-Fi"))
         .build();
 ```
 - provide callable methods with names starting ```add_``` e.g.
 ```
-    let mut builder = TaskManager::builder()
-        .with_task(task1)?;
-    
-    builder.add_task(task2)?;
-    
-    builder.build();
+    let mut builder = TaskSchedulerBuilder::new();
+
+    builder.add_task(task1, "0 */5 * * * *")?;
+    builder.add_task(task2, "0 17 2 * * *")?;
 ```
 - have methods which either return their result directly (if there are no failure scenarios) or return an ```anyhow::Result<>``` of their result.
 

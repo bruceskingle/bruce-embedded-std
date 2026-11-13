@@ -152,11 +152,7 @@ impl MdnsResponder {
         if self.wifi_receiver.is_none() {
             anyhow::bail!("Receiver is None");
         } else {
-            let wifi_receiver = std::mem::replace(
-                &mut self.wifi_receiver,
-                None, // dummy receiver
-            )
-            .unwrap();
+            let wifi_receiver = self.wifi_receiver.take().unwrap();
 
             let hostname = hostname.clone();
 

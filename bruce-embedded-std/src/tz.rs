@@ -64,7 +64,7 @@ pub enum TimeZone {
     Utc,
 }
 
-pub const ALL: &'static [TimeZone] = &[
+pub const ALL: &[TimeZone] = &[
     // Europe
     TimeZone::EuropeLondon,
     TimeZone::EuropeBerlin,
@@ -184,40 +184,45 @@ impl TimeZone {
             TimeZone::Utc => TZ_UTC,
         }
     }
+}
 
-    pub fn from_str(s: &str) -> Option<Self> {
+/// A time zone by its POSIX TZ string, as to_str gives it, e.g. for a setting kept as text.
+impl std::str::FromStr for TimeZone {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
         match s {
-            TZ_EUROPE_LONDON => Some(Self::EuropeLondon),
-            TZ_EUROPE_BERLIN => Some(Self::EuropeBerlin),
-            TZ_EUROPE_PARIS => Some(Self::EuropeParis),
-            TZ_EUROPE_MADRID => Some(Self::EuropeMadrid),
-            TZ_EUROPE_ROME => Some(Self::EuropeRome),
+            TZ_EUROPE_LONDON => Ok(Self::EuropeLondon),
+            TZ_EUROPE_BERLIN => Ok(Self::EuropeBerlin),
+            TZ_EUROPE_PARIS => Ok(Self::EuropeParis),
+            TZ_EUROPE_MADRID => Ok(Self::EuropeMadrid),
+            TZ_EUROPE_ROME => Ok(Self::EuropeRome),
 
-            TZ_AMERICA_NEW_YORK => Some(Self::AmericaNewYork),
-            TZ_AMERICA_CHICAGO => Some(Self::AmericaChicago),
-            TZ_AMERICA_DENVER => Some(Self::AmericaDenver),
-            TZ_AMERICA_LOS_ANGELES => Some(Self::AmericaLosAngeles),
+            TZ_AMERICA_NEW_YORK => Ok(Self::AmericaNewYork),
+            TZ_AMERICA_CHICAGO => Ok(Self::AmericaChicago),
+            TZ_AMERICA_DENVER => Ok(Self::AmericaDenver),
+            TZ_AMERICA_LOS_ANGELES => Ok(Self::AmericaLosAngeles),
 
-            TZ_AMERICA_TORONTO => Some(Self::AmericaToronto),
-            TZ_AMERICA_VANCOUVER => Some(Self::AmericaVancouver),
+            TZ_AMERICA_TORONTO => Ok(Self::AmericaToronto),
+            TZ_AMERICA_VANCOUVER => Ok(Self::AmericaVancouver),
 
-            TZ_AUSTRALIA_SYDNEY => Some(Self::AustraliaSydney),
-            TZ_AUSTRALIA_MELBOURNE => Some(Self::AustraliaMelbourne),
-            TZ_AUSTRALIA_BRISBANE => Some(Self::AustraliaBrisbane),
+            TZ_AUSTRALIA_SYDNEY => Ok(Self::AustraliaSydney),
+            TZ_AUSTRALIA_MELBOURNE => Ok(Self::AustraliaMelbourne),
+            TZ_AUSTRALIA_BRISBANE => Ok(Self::AustraliaBrisbane),
 
-            TZ_PACIFIC_AUCKLAND => Some(Self::PacificAuckland),
+            TZ_PACIFIC_AUCKLAND => Ok(Self::PacificAuckland),
 
-            TZ_ASIA_TOKYO => Some(Self::AsiaTokyo),
-            TZ_ASIA_SHANGHAI => Some(Self::AsiaShanghai),
-            TZ_ASIA_KOLKATA => Some(Self::AsiaKolkata),
-            TZ_ASIA_SINGAPORE => Some(Self::AsiaSingapore),
-            TZ_ASIA_DUBAI => Some(Self::AsiaDubai),
+            TZ_ASIA_TOKYO => Ok(Self::AsiaTokyo),
+            TZ_ASIA_SHANGHAI => Ok(Self::AsiaShanghai),
+            TZ_ASIA_KOLKATA => Ok(Self::AsiaKolkata),
+            TZ_ASIA_SINGAPORE => Ok(Self::AsiaSingapore),
+            TZ_ASIA_DUBAI => Ok(Self::AsiaDubai),
 
-            TZ_AMERICA_SAO_PAULO => Some(Self::AmericaSaoPaulo),
+            TZ_AMERICA_SAO_PAULO => Ok(Self::AmericaSaoPaulo),
 
-            TZ_UTC | TZ_UTC_ALT => Some(Self::Utc),
+            TZ_UTC | TZ_UTC_ALT => Ok(Self::Utc),
 
-            _ => None,
+            _ => anyhow::bail!("{s} is not a known time zone"),
         }
     }
 }

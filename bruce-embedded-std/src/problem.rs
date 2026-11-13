@@ -185,15 +185,15 @@ mod tests {
     fn test_problem_manager_is_empty() {
         let manager = ProblemManager::new();
 
-        assert_eq!(manager.is_empty(), true);
+        assert!(manager.is_empty());
 
         let second_id = manager.set(None, "second problem".to_string());
 
-        assert_eq!(manager.is_empty(), false);
+        assert!(!manager.is_empty());
 
         manager.clear(second_id);
 
-        assert_eq!(manager.is_empty(), true);
+        assert!(manager.is_empty());
     }
 
     #[test]

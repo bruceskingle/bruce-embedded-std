@@ -9,6 +9,12 @@ pub struct ListenerManager<T> {
     listeners: Mutex<Vec<Weak<dyn Listener<T>>>>,
 }
 
+impl<T> Default for ListenerManager<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> ListenerManager<T> {
     pub fn new() -> Self {
         Self {

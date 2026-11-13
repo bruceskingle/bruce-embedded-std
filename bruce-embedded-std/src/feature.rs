@@ -31,7 +31,7 @@ impl FeatureConfigHolder {
 
     pub fn from_feature(
         feature_descriptor: FeatureDescriptor,
-        config_store_factory: &Box<dyn ConfigStoreFactory>,
+        config_store_factory: &dyn ConfigStoreFactory,
         internal: bool,
     ) -> anyhow::Result<Self> {
         let config_store = config_store_factory.create(feature_descriptor.name.clone(), internal)?;
@@ -89,14 +89,14 @@ impl FeatureConfigHolder {
         // Each feature is a card, closed after its settings.
         if let EnabledState::Required = inner.enabled {
             // Required features are always enabled, so we just show the config page without a checkbox
-            resp.write(format!(r#"<section class="feature"><h2>{feature_name}</h2>"#).as_bytes())?;
+            resp.write_all(format!(r#"<section class="feature"><h2>{feature_name}</h2>"#).as_bytes())?;
         } else {
             info!("feature.enabled for {}: {}", &self.name, inner.enabled.is_enabled());
 
             let name = format!("feature_{}", &self.name);
             let checked = if inner.enabled.is_enabled() { " checked" } else { "" };
 
-            resp.write(
+            resp.write_all(
                 format!(
                     r#"
                         <section class="feature">
@@ -124,7 +124,7 @@ impl FeatureConfigHolder {
                 if is_set && !config_value.required {
                     // Clear Password only ticks the hidden clear_ checkbox, which Save then acts on, see
                     // handle_config_form, and says so in the field. Typing a new value unticks it.
-                    resp.write(format!(r#"
+                    resp.write_all(format!(r#"
                         <!-- Secret field {name}-->
                         <label for="{name}">{label}</label>
                         <div class="form_row">
@@ -135,7 +135,7 @@ impl FeatureConfigHolder {
                         </div>
             "#).as_bytes())?;
                 } else {
-                    resp.write(format!(r#"
+                    resp.write_all(format!(r#"
                         <!-- Secret field {name}-->
                         <label for="{name}">{label}</label>
                         <input id="{name}" name="{name}" type="password"{maxlength} autocomplete="new-password" placeholder="{placeholder}" value="">
@@ -168,7 +168,7 @@ impl FeatureConfigHolder {
                         Some(preview) => format!(r#" oninput="sliderMoved(this, '{preview}')""#),
                         None => r#" oninput="this.nextElementSibling.value = this.value""#.to_string(),
                     };
-                    resp.write(
+                    resp.write_all(
                         format!(
                             r#"
                         <!-- Slider field {name}-->
@@ -182,7 +182,7 @@ impl FeatureConfigHolder {
                         .as_bytes(),
                     )?;
                     if preview.is_some() {
-                        resp.write(br#"
+                        resp.write_all(br#"
                         <script>
                         if (!window.sliderMoved) {
                             const sending = new Map();
@@ -211,7 +211,7 @@ impl FeatureConfigHolder {
                         ""
                     };
 
-                    resp.write(format!(r#"
+                    resp.write_all(format!(r#"
                                 <label class="checkbox"><input id="{name}" name="{name}" type="checkbox" value="true" {checked}> {label}</label>
                     "#).as_bytes())?;
                     continue;
@@ -219,7 +219,7 @@ impl FeatureConfigHolder {
                 TypedValue::TimeZone(opt_tz) => {
                     info!("Config value {} is a TimeZone,", name);
 
-                    resp.write(
+                    resp.write_all(
                         format!(
                             r#"
                                 <!-- Timezone field {name}-->
@@ -229,7 +229,7 @@ impl FeatureConfigHolder {
                         .as_bytes(),
                     )?;
                     let selected_attr = if opt_tz.is_none() { " selected" } else { "" };
-                    resp.write(format!(r#"<option value=""{selected_attr}>None</option>"#).as_bytes())?;
+                    resp.write_all(format!(r#"<option value=""{selected_attr}>None</option>"#).as_bytes())?;
 
                     for tz in TimeZone::iter() {
                         let selected_attr = if let Some(current) = opt_tz {
@@ -237,7 +237,7 @@ impl FeatureConfigHolder {
                         } else {
                             ""
                         };
-                        resp.write(
+                        resp.write_all(
                             format!(
                                 r#"<option value="{}"{}>{}</option>"#,
                                 tz.to_str(),
@@ -247,14 +247,14 @@ impl FeatureConfigHolder {
                             .as_bytes(),
                         )?;
                     }
-                    resp.write(format!(r#"</select>"#).as_bytes())?;
+                    resp.write_all(r#"</select>"#.as_bytes())?;
                     continue;
                 }
                 TypedValue::Color(opt_color) => {
                     info!("Config value {} is a Color,", name);
                     let value = crate::config::format_opt_rgb8(opt_color);
 
-                    resp.write(
+                    resp.write_all(
                         format!(
                             r#"
                                 <!-- Color field {name}-->
@@ -281,7 +281,7 @@ impl FeatureConfigHolder {
                         "Not set".to_string()
                     };
 
-                    resp.write(
+                    resp.write_all(
                         format!(
                             r#"
                                 <!-- Cron field {name}-->
@@ -295,7 +295,7 @@ impl FeatureConfigHolder {
                     continue;
                 }
             };
-            resp.write(
+            resp.write_all(
                 format!(
                     r#"
                         <!-- Other field {name}-->
@@ -306,7 +306,7 @@ impl FeatureConfigHolder {
                 .as_bytes(),
             )?;
         }
-        resp.write(b"</section>")?;
+        resp.write_all(b"</section>")?;
 
         Ok(())
     }
@@ -334,14 +334,14 @@ impl FeatureConfigHolder {
         for (name, config_value) in inner.spec.map.iter_mut() {
             info!("Processing config value: {}", name);
             let str_val = form.get(name).map(|s| s.as_str()).unwrap_or("").trim();
-            if config_value.secret && str_val.len() == 0 {
+            if config_value.secret && str_val.is_empty() {
                 // The page never shows a secret, so an empty field keeps it, unless clear was ticked.
                 let clear = form.get(&format!("clear_{name}")).is_some_and(|value| value == "true");
                 if clear && !config_value.value.is_none() {
                     log::info!("Clearing secret config value {}", name);
                     self.config_store.remove(name, config_value)?;
                 }
-            } else if str_val.len() == 0 {
+            } else if str_val.is_empty() {
                 log::info!("Config value {} is None", name);
                 if !config_value.value.is_none() {
                     log::info!("Setting optional config value {} to None", name);

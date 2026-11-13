@@ -183,11 +183,11 @@ impl ConfigManager {
         for (feature_name, enabled, settings) in changes {
             let feature = &self.features[&feature_name];
             let mut config = feature.inner.lock().unwrap();
-            if let Some(enabled) = enabled {
-                if enabled != config.enabled {
-                    feature.config_store.save_enabled_state(enabled)?;
-                    config.enabled = enabled;
-                }
+            if let Some(enabled) = enabled
+                && enabled != config.enabled
+            {
+                feature.config_store.save_enabled_state(enabled)?;
+                config.enabled = enabled;
             }
             for (name, text) in settings {
                 let setting = config.spec.map.get_mut(&name).expect("checked above");

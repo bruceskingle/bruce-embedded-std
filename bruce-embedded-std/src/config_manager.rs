@@ -45,7 +45,7 @@ impl ConfigManagerBuilder {
 
     pub fn add_feature(&mut self, descriptor: FeatureDescriptor, internal: bool) -> anyhow::Result<(Config, bool)> {
         log::info!("About to create config for feature: {}", &descriptor.name);
-        let feature_config = FeatureConfigHolder::from_feature(descriptor, &self.config_store_factory, internal)?;
+        let feature_config = FeatureConfigHolder::from_feature(descriptor, &*self.config_store_factory, internal)?;
         let feature_name = feature_config.name.clone();
         let config = feature_config.to_config();
         let valid = feature_config.is_valid();
@@ -160,7 +160,7 @@ impl ConfigManager {
     }
 
     fn show_config_page(config_manager_clone: &Arc<ConfigManager>, resp: &mut dyn Write) -> anyhow::Result<()> {
-        resp.write(
+        resp.write_all(
             r#"
                 <!DOCTYPE html>
                 <html lang="en">
@@ -177,37 +177,33 @@ impl ConfigManager {
 
         if !config_manager_clone.problem_manager.is_empty() {
             info!("Failure reason present, showing error message on config page");
-            resp.write(
-                format!(
-                    r#"
+            resp.write_all(
+                r#"
                     <div class="problems">
                         <strong>Problems</strong> <ul>
                 "#
-                )
                 .as_bytes(),
             )?;
 
             for reason in &*config_manager_clone.problem_manager {
-                resp.write("<li>".as_bytes())?;
-                resp.write(reason.as_bytes())?;
-                resp.write("</li>\n".as_bytes())?;
+                resp.write_all("<li>".as_bytes())?;
+                resp.write_all(reason.as_bytes())?;
+                resp.write_all("</li>\n".as_bytes())?;
             }
 
-            resp.write(
-                format!(
-                    r#"
+            resp.write_all(
+                r#"
                     </ul>
                     </div>
                 "#
-                )
                 .as_bytes(),
             )?;
         } else {
             info!("No failure reason, not showing error message on config page");
         }
         if config_manager_clone.is_managed() && config_manager_clone.is_online() {
-            resp.write(format!(r#"<h1>Settings</h1>{}"#, config_manager_clone.about_html()).as_bytes())?;
-            resp.write(
+            resp.write_all(format!(r#"<h1>Settings</h1>{}"#, config_manager_clone.about_html()).as_bytes())?;
+            resp.write_all(
                 r#"
                         <p>An app, such as Bruce's Smart Home, manages this device and changes its settings.</p>
                         <p>To manage it here again, release it in the app, or hold its BOOT button for 5 seconds.</p>
@@ -220,8 +216,8 @@ impl ConfigManager {
             )?;
             return Ok(());
         }
-        resp.write(format!(r#"<h1>Settings</h1>{}"#, config_manager_clone.about_html()).as_bytes())?;
-        resp.write(
+        resp.write_all(format!(r#"<h1>Settings</h1>{}"#, config_manager_clone.about_html()).as_bytes())?;
+        resp.write_all(
             r#"
                         <p><a href="/">Home</a></p>
                         <form method="POST" action="/update_config">"#
@@ -231,25 +227,21 @@ impl ConfigManager {
             feature_config.create_config_page(resp)?;
         }
 
-        resp.write(
-            format!(
-                r#"<button type="submit">Save</button>
+        resp.write_all(
+            r#"<button type="submit">Save</button>
                         </form>
                 "#
-            )
             .as_bytes(),
         )?;
 
         config_manager_clone.commands.show_config_page(resp)?;
 
-        resp.write(
-            format!(
-                r#"
+        resp.write_all(
+            r#"
                     </div>
                 </body>
                 </html>
                 "#
-            )
             .as_bytes(),
         )?;
         Ok(())
@@ -260,7 +252,7 @@ impl ConfigManager {
         if self.is_managed() && self.is_online() {
             anyhow::bail!("an app manages this device, so commands cannot be given here");
         }
-        self.commands.handle_command(resp, form, &self)
+        self.commands.handle_command(resp, form, self)
     }
 
     pub fn create_pages(

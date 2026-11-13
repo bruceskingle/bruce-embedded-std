@@ -38,7 +38,10 @@ pub trait FeatureConfig: Sized {
     fn to_config_spec() -> anyhow::Result<ConfigSpec>;
 }
 
+/// A setting's value, of its type. A Cron schedule makes it large, but a device has only a few dozen settings, so it is
+/// kept as it is rather than boxed.
 #[derive(Clone, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum TypedValue {
     String(usize, Option<String>),
     Int32(Option<i32>),
@@ -47,6 +50,23 @@ pub enum TypedValue {
     TimeZone(Option<TimeZone>),
     Cron(Option<Cron>),
     Color(Option<RGB8>),
+}
+
+/// The value as text, as a setting's field shows it and the store keeps it.
+impl std::fmt::Display for TypedValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let text: String = match self {
+            TypedValue::String(_len, Some(val)) => val.clone(),
+            TypedValue::Int32(Some(val)) => val.to_string(),
+            TypedValue::Int64(Some(val)) => val.to_string(),
+            TypedValue::Bool(Some(val)) => val.to_string(),
+            TypedValue::TimeZone(Some(tz)) => tz.to_str().to_string(),
+            TypedValue::Cron(Some(cron)) => cron.pattern.to_string(),
+            TypedValue::Color(Some(color)) => format_rgb8(color),
+            _ => "".to_string(),
+        };
+        f.write_str(&text)
+    }
 }
 
 impl std::fmt::Debug for TypedValue {
@@ -89,19 +109,6 @@ impl TypedValue {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        match self {
-            TypedValue::String(_len, Some(val)) => val.clone(),
-            TypedValue::Int32(Some(val)) => val.to_string(),
-            TypedValue::Int64(Some(val)) => val.to_string(),
-            TypedValue::Bool(Some(val)) => val.to_string(),
-            TypedValue::TimeZone(Some(tz)) => tz.to_str().to_string(),
-            TypedValue::Cron(Some(cron)) => cron.pattern.to_string(),
-            TypedValue::Color(Some(color)) => format_rgb8(color),
-            _ => "".to_string(),
-        }
-    }
-
     pub fn to_none(&self) -> Self {
         match self {
             TypedValue::String(len, _) => TypedValue::String(*len, None),
@@ -117,7 +124,7 @@ impl TypedValue {
     pub fn from_str(&self, str_val: &str) -> anyhow::Result<TypedValue> {
         Ok(match self {
             TypedValue::String(len, _) => {
-                if str_val.len() > *len as usize {
+                if str_val.len() > *len {
                     anyhow::bail!("String value too long: max length is {}", len);
                 }
                 TypedValue::String(*len, Some(str_val.to_string()))
@@ -125,7 +132,7 @@ impl TypedValue {
             TypedValue::Int32(_) => TypedValue::Int32(Some(str_val.parse::<i32>()?)),
             TypedValue::Int64(_) => TypedValue::Int64(Some(str_val.parse::<i64>()?)),
             TypedValue::Bool(_) => TypedValue::Bool(Some(str_val.parse::<bool>()?)),
-            TypedValue::TimeZone(_) => TypedValue::TimeZone(TimeZone::from_str(str_val)),
+            TypedValue::TimeZone(_) => TypedValue::TimeZone(str_val.parse().ok()),
             TypedValue::Cron(_) => TypedValue::Cron(Some(Cron::from_str(str_val)?)),
             TypedValue::Color(_) => TypedValue::Color(Some(parse_rgb8(str_val)?)),
         })

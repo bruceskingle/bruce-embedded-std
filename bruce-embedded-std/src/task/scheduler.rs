@@ -21,6 +21,12 @@ pub struct TaskSchedulerBuilder<S: Platform> {
     tasks: Vec<TaskHolder<S>>,
 }
 
+impl<S: Platform> Default for TaskSchedulerBuilder<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<S: Platform> TaskSchedulerBuilder<S> {
     pub fn new() -> Self {
         Self { tasks: Vec::new() }

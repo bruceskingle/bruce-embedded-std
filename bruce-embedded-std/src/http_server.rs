@@ -29,19 +29,16 @@ pub enum HttpMethod {
     Post,
 }
 
-pub trait HttpServerManager {
-    fn handle(
-        &mut self,
-        uri: &str,
-        method: HttpMethod,
-        f: Box<dyn Fn(&mut dyn Write) -> anyhow::Result<()> + Send>,
-    ) -> anyhow::Result<()>;
+/// A handler which writes a page to the response.
+pub type PageHandler = Box<dyn Fn(&mut dyn Write) -> anyhow::Result<()> + Send>;
 
-    fn handle_post_form(
-        &mut self,
-        uri: &str,
-        f: Box<dyn Fn(&mut dyn Write, IndexMap<String, String>) -> anyhow::Result<()> + Send>,
-    ) -> anyhow::Result<()>;
+/// A handler of a posted form, given its fields, which writes the page in reply.
+pub type FormHandler = Box<dyn Fn(&mut dyn Write, IndexMap<String, String>) -> anyhow::Result<()> + Send>;
+
+pub trait HttpServerManager {
+    fn handle(&mut self, uri: &str, method: HttpMethod, f: PageHandler) -> anyhow::Result<()>;
+
+    fn handle_post_form(&mut self, uri: &str, f: FormHandler) -> anyhow::Result<()>;
 
     fn handle_status(
         &mut self,
@@ -50,7 +47,7 @@ pub trait HttpServerManager {
         status: u16,
         message: Option<&'static str>,
         headers: &'static [(&'static str, &'static str)],
-        f: Box<dyn Fn(&mut dyn Write) -> anyhow::Result<()> + Send>,
+        f: PageHandler,
     ) -> anyhow::Result<()>;
 
     fn init_common_pages(&mut self) -> anyhow::Result<()> {
@@ -61,7 +58,7 @@ pub trait HttpServerManager {
             Some("OK"),
             &[("Content-Type", "text/css")],
             Box::new(|resp| {
-            resp.write(r#"
+            resp.write_all(r#"
 /* Dark, as Bruce's Smart Home is, and for a phone first: one column, fields the width of the screen. */
 :root {
   color-scheme: dark;
