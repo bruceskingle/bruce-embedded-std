@@ -22,6 +22,17 @@ pub mod tz;
 
 pub type Layout = fn(&Rectangle) -> Rectangle;
 
+/// The stack size of a thread, given what it needs on an ESP32, whose RAM is scarce, e.g. 4096: that, on an ESP32, and
+/// at least 256 KB elsewhere, e.g. in the board simulator on a computer, see bruce-embedded-sim, whose code, debug
+/// builds especially, takes more stack than the device's, and where a stack overflow would end the program.
+pub fn thread_stack(on_device: usize) -> usize {
+    if cfg!(target_os = "espidf") {
+        on_device
+    } else {
+        on_device.max(256 * 1024)
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum DisplayOrientation {
     Rotate0,

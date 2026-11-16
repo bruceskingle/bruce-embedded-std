@@ -26,6 +26,11 @@ nalgebra = { version = "0.34.2", optional = true }
 # The derive macro for Features' settings, released with this crate.
 bruce-embedded-std-derive = { version = "0.2.0", path = "../bruce-embedded-std-derive" }
 
+# The mDNS responder's socket on a computer, e.g. in the board simulator, which shares port 5353 with the computer's
+# own responder, see mdns.rs.
+[target.'cfg(not(target_os = "espidf"))'.dependencies]
+socket2 = { version = "0.6", features = ["all"] }
+
 [features]
 # The attitude and heading from an IMU's readings, see ahrs.rs.
 ahrs = ["dep:ahrs", "dep:nalgebra"]

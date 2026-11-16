@@ -32,7 +32,7 @@ impl MdnsResponder {
         let mut ip = wifi_receiver.recv()?;
         info!("mDNS IP acquired: {}", ip);
 
-        let socket = UdpSocket::bind("0.0.0.0:5353")?;
+        let socket = bind_mdns()?;
         socket.set_nonblocking(false)?;
 
         // IMPORTANT for ESP32/lwIP: use actual interface IP
@@ -158,12 +158,33 @@ impl MdnsResponder {
 
             // Not the default stack, 16 KB on some boards, as it only needs room for a packet, and the RAM is needed for
             // HTTPS connections.
-            thread::Builder::new().stack_size(6144).spawn(move || {
-                if let Err(error) = Self::run(wifi_receiver, hostname) {
-                    error!("mDNS error: {}", error);
-                }
-            })?;
+            thread::Builder::new()
+                .stack_size(crate::thread_stack(6144))
+                .spawn(move || {
+                    if let Err(error) = Self::run(wifi_receiver, hostname) {
+                        error!("mDNS error: {}", error);
+                    }
+                })?;
         }
         Ok(())
     }
+}
+
+/// The socket mDNS is answered on, port 5353, which on a device is the responder's alone.
+#[cfg(target_os = "espidf")]
+fn bind_mdns() -> anyhow::Result<UdpSocket> {
+    Ok(UdpSocket::bind("0.0.0.0:5353")?)
+}
+
+/// The socket mDNS is answered on, port 5353, which on a computer, e.g. in the board simulator, the computer's own
+/// responder has, so shared with it, as every responder on a computer does.
+#[cfg(not(target_os = "espidf"))]
+fn bind_mdns() -> anyhow::Result<UdpSocket> {
+    use socket2::{Domain, Protocol, Socket, Type};
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.set_reuse_address(true)?;
+    #[cfg(unix)]
+    socket.set_reuse_port(true)?;
+    socket.bind(&std::net::SocketAddr::from(([0, 0, 0, 0], 5353)).into())?;
+    Ok(socket.into())
 }

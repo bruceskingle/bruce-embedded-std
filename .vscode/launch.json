@@ -1,0 +1,33 @@
+{
+    // The board simulator's own example, the analog clock, on each board it simulates, see
+    // bruce-embedded-sim/examples/clock.rs and docs/Simulator.md, run under the debugger.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Simulator: Clock on the RLCD",
+            "presentation": { "group": "Simulator", "order": 1 },
+            "cargo": {
+                "args": ["build", "--package=bruce-embedded-sim", "--example=clock"],
+                "filter": { "name": "clock", "kind": "example" }
+            },
+            "args": ["--board", "rlcd42"],
+            "cwd": "${workspaceFolder}",
+            "env": { "RUST_BACKTRACE": "1" }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Simulator: Clock on the Guitron",
+            "presentation": { "group": "Simulator", "order": 2 },
+            "cargo": {
+                "args": ["build", "--package=bruce-embedded-sim", "--example=clock"],
+                "filter": { "name": "clock", "kind": "example" }
+            },
+            "args": ["--board", "guitron"],
+            "cwd": "${workspaceFolder}",
+            "env": { "RUST_BACKTRACE": "1" }
+        }
+    ]
+}

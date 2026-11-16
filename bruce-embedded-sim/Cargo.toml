@@ -1,0 +1,38 @@
+[package]
+name = "bruce-embedded-sim"
+version = "0.2.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Bruce's Standard Library Embedded Platform's board simulator: firmware for the platform run on a desktop computer, its board's display in a window framed by a photo of the board"
+repository = "https://github.com/bruceskingle/bruce-embedded-std"
+readme = "../README.md"
+
+[dependencies]
+log = "0.4"
+anyhow = "1.0.102"
+embedded-graphics = "0.8"
+rgb = "0.8.53"
+# The window, see window.rs. On Linux, without the Wayland window decorations, which need BSD licensed crates. Linux
+# builds also take libloading (ISC), through winit's keyboard and the Wayland client, which is waiting for Bruce's
+# approval; macOS and Windows builds do not.
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11", "wayland"] }
+softbuffer = { version = "0.4", default-features = false, features = ["x11", "wayland"] }
+# Screenshots, and the photos of the boards, see screenshot.rs and frame.rs.
+png = "0.17"
+
+bruce-embedded-std = { version = "0.2.0", path = "../bruce-embedded-std" }
+
+# The HTTP server and client with ESP-IDF's shape, see svc/mod.rs, with the svc feature: embedded-svc's traits, rustls
+# for HTTPS with ring, as Bruce's Smart Home has, and ureq for the client.
+embedded-svc = { version = "0.29.0", optional = true }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"], optional = true }
+ureq = { version = "3", default-features = false, features = ["rustls"], optional = true }
+# NVS's namespaces, as JSON files, see svc/nvs.rs, and random bytes, see svc/sys.rs.
+serde_json = { version = "1", optional = true }
+getrandom = { version = "0.3", optional = true }
+
+[features]
+svc = ["dep:embedded-svc", "dep:rustls", "dep:ureq", "dep:serde_json", "dep:getrandom"]
+
+[dev-dependencies]
+env_logger = "0.11.10"
