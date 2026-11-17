@@ -194,12 +194,11 @@ impl ImuManager {
     }
 
     fn new(mode: Mode) -> ImuManager {
-        let manager = ImuManager {
+        ImuManager {
             mode,
             state: Arc::new(RwLock::new(InternalState::new())),
             calibration: Calibration::new(),
-        };
-        manager
+        }
     }
 
     #[cfg(feature = "ahrs")]
@@ -579,7 +578,7 @@ impl ImuManager {
 
             let new_state = InternalState {
                 #[cfg(feature = "ahrs")]
-                quaternion: q.clone(),
+                quaternion: *q,
                 #[cfg(feature = "tilt")]
                 raw_pitch,
                 #[cfg(feature = "tilt")]
