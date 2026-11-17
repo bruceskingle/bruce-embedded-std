@@ -42,11 +42,14 @@ pub fn run(device: Device, inputs: Sender<Input>) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// A window shown, with the surface its pixels are drawn on, made when the event loop resumes.
+pub(crate) type Shown = (Rc<Window>, softbuffer::Surface<Rc<Window>, Rc<Window>>);
+
 struct App {
     device: Device,
     inputs: Sender<Input>,
     frame: Canvas,
-    window: Option<(Rc<Window>, softbuffer::Surface<Rc<Window>, Rc<Window>>)>,
+    window: Option<Shown>,
     /// Where the mouse is, in the frame's pixels.
     cursor: Option<Point>,
     /// The button the mouse is holding down, if any.

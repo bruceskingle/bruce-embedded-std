@@ -50,15 +50,18 @@ impl<T> EspNvsPartition<T> {
     }
 }
 
+/// A namespace's values, by key, shared by every EspNvs of it.
+type Values = Arc<Mutex<BTreeMap<String, Value>>>;
+
 /// The values of each namespace file which is open, shared by every EspNvs of it, as ESP-IDF's handles share the
 /// flash, so that one sees what another wrote.
-static OPEN: Mutex<BTreeMap<PathBuf, Arc<Mutex<BTreeMap<String, Value>>>>> = Mutex::new(BTreeMap::new());
+static OPEN: Mutex<BTreeMap<PathBuf, Values>> = Mutex::new(BTreeMap::new());
 
 /// A namespace of a partition, with ESP-IDF's methods. Each value is kept with its type, as NVS does, e.g.
 /// {"u8": 1}, {"str": "text"} or {"blob": [1, 2]}, and is read only as that type.
 pub struct EspNvs<T> {
     file: PathBuf,
-    values: Arc<Mutex<BTreeMap<String, Value>>>,
+    values: Values,
     _kind: PhantomData<T>,
 }
 

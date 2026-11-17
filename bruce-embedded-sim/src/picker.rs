@@ -81,7 +81,7 @@ struct Picker {
     tiles: Vec<Rectangle>,
     /// The whole picture, in its pixels, which the window is scaled to.
     size: Size,
-    window: Option<(Rc<Window>, softbuffer::Surface<Rc<Window>, Rc<Window>>)>,
+    window: Option<crate::window::Shown>,
     /// Where the mouse is, in the picture's pixels.
     cursor: Option<Point>,
     /// The board under the mouse when last drawn, so that it is drawn again when that changes.

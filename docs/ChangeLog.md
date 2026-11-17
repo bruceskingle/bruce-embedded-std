@@ -1,5 +1,24 @@
 # ChangeLog
 
+# Release 0.2.0
+
+## New
+
+- **bruce-embedded-sim**, a board simulator: a platform's firmware, built for a computer rather than an ESP32, runs in
+  a window showing the board's display, framed by a picture of the board, with its buttons clicked and its touch screen
+  dragged with the mouse. It simulates rather than emulates: the firmware's own code runs, with the ESP-IDF services it
+  uses, HTTP and HTTPS servers, an HTTP client and NVS, given by the `svc` feature under the same names, so the same
+  files build for both. It simulates the Waveshare ESP32-S3-RLCD-4.2 and the Guition JC3248W535C, offers a window to
+  choose one if none is given, remembers each window's place, copies what the screen shows, and takes screenshots, in a
+  window or without one. See docs/Simulator.md.
+
+## Improved
+
+- `thread_stack`, the stack size a thread needs: what it is given on an ESP32, and at least 256 KB elsewhere, e.g. in
+  the simulator, where a debug build takes more stack.
+- The mDNS responder shares its port with other programs on a computer, e.g. several simulated devices, as it is only
+  ever alone on an ESP32.
+
 # Release 0.1.0
 
 ## New
