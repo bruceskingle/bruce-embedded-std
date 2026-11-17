@@ -1,6 +1,6 @@
 [package]
 name = "bruce-embedded-sim"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Bruce's Standard Library Embedded Platform's board simulator: firmware for the platform run on a desktop computer, its board's display in a window framed by a photo of the board"
@@ -20,7 +20,7 @@ softbuffer = { version = "0.4", default-features = false, features = ["x11", "wa
 # Screenshots, and the photos of the boards, see screenshot.rs and frame.rs.
 png = "0.17"
 
-bruce-embedded-std = { version = "0.2.0", path = "../bruce-embedded-std" }
+bruce-embedded-std = { version = "0.3.0", path = "../bruce-embedded-std" }
 
 # The HTTP server and client with ESP-IDF's shape, see svc/mod.rs, with the svc feature: embedded-svc's traits, rustls
 # for HTTPS with ring, as Bruce's Smart Home has, and ureq for the client.
