@@ -1,6 +1,6 @@
 [package]
 name = "bruce-embedded-sim"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Bruce's Standard Library Embedded Platform's board simulator: firmware for the platform run on a desktop computer, its board's display in a window framed by a photo of the board"
@@ -12,15 +12,16 @@ log = "0.4"
 anyhow = "1.0.102"
 embedded-graphics = "0.8"
 rgb = "0.8.53"
-# The window, see window.rs. On Linux, without the Wayland window decorations, which need BSD licensed crates. Linux
-# builds also take libloading (ISC), through winit's keyboard and the Wayland client, which is waiting for Bruce's
-# approval; macOS and Windows builds do not.
-winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11", "wayland"] }
-softbuffer = { version = "0.4", default-features = false, features = ["x11", "wayland"] }
+# The window, see window.rs. On Linux, without the Wayland window decorations, which need BSD licensed crates, and with
+# Wayland's and X11's libraries loaded when it runs, not linked when it is built, so that a build needs no development
+# packages, e.g. on CI, and the simulator runs where there is only one of them. Linux builds also take libloading (ISC,
+# approved 17 Nov 2026), through winit's keyboard and the Wayland client; macOS and Windows builds do not.
+winit = { version = "0.30", default-features = false, features = ["rwh_06", "x11", "wayland", "wayland-dlopen"] }
+softbuffer = { version = "0.4", default-features = false, features = ["x11", "x11-dlopen", "wayland", "wayland-dlopen"] }
 # Screenshots, and the photos of the boards, see screenshot.rs and frame.rs.
 png = "0.17"
 
-bruce-embedded-std = { version = "0.2.0", path = "../bruce-embedded-std" }
+bruce-embedded-std = { version = "0.3.0", path = "../bruce-embedded-std" }
 
 # The HTTP server and client with ESP-IDF's shape, see svc/mod.rs, with the svc feature: embedded-svc's traits, rustls
 # for HTTPS with ring, as Bruce's Smart Home has, and ureq for the client.

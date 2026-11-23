@@ -1,0 +1,54 @@
+# Made by bruce-method-release's setup from its deny.toml template, except for this repository's approvals and ignored
+# advisories below, which setup keeps. Change the template, or this repository's hooks, not this file: setup replaces
+# it, and the release checks fail while it differs.
+#
+# cargo-deny's checks, run with `cargo deny check`: the licences of every crate in the build, the advisories against
+# them, and where they come from.
+
+[graph]
+all-features = true
+
+[licenses]
+# The licences approved for every crate: MIT and Apache-2.0, alone or as a choice; MPL-2.0, for a crate used unmodified;
+# Unicode-3.0, the Unicode Consortium's MIT-like licence for its tables; ISC and BSD-3-Clause; CDLA-Permissive-2.0, for
+# data such as Mozilla's root certificates; CC0-1.0, a dedication to the public domain; and BSL-1.0, the Boost licence,
+# which asks for its notice only with source. The notice of each but MIT, Apache-2.0, CC0-1.0 and BSL-1.0 goes in the
+# third-party notices. Any other licence fails until it is approved for a crate and listed below, with what pulls it in.
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "ISC",
+    "BSD-3-Clause",
+    "CDLA-Permissive-2.0",
+    "CC0-1.0",
+    "BSL-1.0",
+]
+confidence-threshold = 0.9
+# The list is the same in every repository, so a licence which no crate in this one has is not reported.
+unused-allowed-license = "allow"
+
+exceptions = [
+    # This repository's approvals, which setup keeps: each crate, the licences approved for it, and what pulls it in.
+    # The end of this repository's approvals.
+]
+
+[advisories]
+# RustSec's advisories: a vulnerable crate fails, an unmaintained one is a warning, so that it is seen.
+unmaintained = "workspace"
+ignore = [
+    # This repository's ignored advisories, which setup keeps: each one, and why it does not apply or cannot be fixed.
+    # chrono is unmaintained, with no replacement yet: croner, the scheduler's cron schedules, needs it, and the time
+    # zones use it too; to be replaced when croner no longer needs it.
+    { id = "RUSTSEC-2026-0543", reason = "needed by croner, until it no longer needs chrono" },
+    # The end of this repository's ignored advisories.
+]
+
+[bans]
+# Several versions of one crate in the build are shown, to be tidied when they can be.
+multiple-versions = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
