@@ -393,6 +393,17 @@ fn match_arm_known(kt: KnownType) -> (TokenStream2, TokenStream2) {
     }
 }
 
+/// For a bool field, the match arm which reads a setting never set, e.g. on a new device, as `value`: false for a
+/// required field, None for an optional one. TypedValue::is_none says a Bool is always set, as one defaults to false,
+/// so without this arm an unset Bool(None) fell through to "Invalid type for ...: expected Bool(None), got Bool(None)".
+fn unset_bool(kt: KnownType, value: TokenStream2) -> TokenStream2 {
+    if matches!(kt, KnownType::Bool) {
+        quote! { Some(ConfigSpecValue { value: TypedValue::Bool(None), .. }) => #value, }
+    } else {
+        quote! {}
+    }
+}
+
 // ── from_config_spec emission ────────────────────────────────────────────────
 
 fn emit_from_extraction(field_ident: &syn::Ident, kind: &FieldKind, key: &str) -> TokenStream2 {
@@ -477,9 +488,11 @@ fn emit_from_extraction(field_ident: &syn::Ident, kind: &FieldKind, key: &str) -
 
         FieldKind::Known { kt, optional: false } => {
             let (pattern, extraction) = match_arm_known(*kt);
+            let unset = unset_bool(*kt, quote! { false });
             quote! {
                 let #field_ident = match spec.map.get(#key) {
                     Some(ConfigSpecValue { value: #pattern, .. }) => #extraction,
+                    #unset
                     // Required, but not set, e.g. a feature enabled before its settings were given.
                     Some(ConfigSpecValue { value, .. }) if value.is_none() => anyhow::bail!("{} is not set", #key),
                     Some(other) => anyhow::bail!(
@@ -493,9 +506,11 @@ fn emit_from_extraction(field_ident: &syn::Ident, kind: &FieldKind, key: &str) -
 
         FieldKind::Known { kt, optional: true } => {
             let (pattern, extraction) = match_arm_known(*kt);
+            let unset = unset_bool(*kt, quote! { None });
             quote! {
                 let #field_ident = match spec.map.get(#key) {
                     Some(ConfigSpecValue { value: #pattern, .. }) => Some(#extraction),
+                    #unset
                     Some(ConfigSpecValue { value, .. }) if value.is_none() => None,
                     Some(other) => anyhow::bail!(
                         "Invalid type for {}: expected {:?}, got {:?}",

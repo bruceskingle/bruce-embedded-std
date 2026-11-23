@@ -10,6 +10,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// How many readings start's calibration takes, 50 ms apart on the boards, so about 5 seconds.
+const CALIBRATION_SAMPLES: usize = 100;
 pub const DEG_TO_RAD: f32 = std::f32::consts::PI / 180.0;
 
 pub trait Gyro: Send + Sync {
@@ -177,7 +179,9 @@ enum Mode {
 pub struct ImuManager {
     mode: Mode,
     state: Arc<RwLock<InternalState>>,
-    calibration: Calibration,
+    /// The calibration, None until it has been measured, which start does in its thread, so that a board is not held up
+    /// for the few seconds it takes, see is_calibrated.
+    calibration: Arc<RwLock<Option<Calibration>>>,
 }
 
 impl ImuManager {
@@ -197,7 +201,7 @@ impl ImuManager {
         ImuManager {
             mode,
             state: Arc::new(RwLock::new(InternalState::new())),
-            calibration: Calibration::new(),
+            calibration: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -205,8 +209,14 @@ impl ImuManager {
     pub fn read_attitude(&self) -> Attitude {
         let state = *self.state.read().unwrap();
 
-        // Rotate by inverse of reference to get relative orientation
-        let relative = self.calibration.accelerometer * state.quaternion;
+        // Rotate by inverse of reference to get relative orientation, none until calibrated.
+        let reference = self
+            .calibration
+            .read()
+            .unwrap()
+            .as_ref()
+            .map_or(UnitQuaternion::identity(), |calibration| calibration.accelerometer);
+        let relative = reference * state.quaternion;
 
         let (roll, pitch, yaw) = relative.euler_angles();
 
@@ -229,12 +239,18 @@ impl ImuManager {
         }
     }
 
-    pub fn start(&mut self, update_frequency: Duration) -> anyhow::Result<()> {
-        self.calibrate(update_frequency, 100)?;
+    /// Whether the IMU has been calibrated, after which its readings mean something: start calibrates it in its thread,
+    /// for a few seconds, keep the board still, before reading it, and until then the readings are zero.
+    pub fn is_calibrated(&self) -> bool {
+        self.calibration.read().unwrap().is_some()
+    }
 
+    /// Starts reading the IMU, in a thread of its own, which first calibrates it, unless calibrate already has, and
+    /// returns at once, so that the board is not held up by the calibration, see is_calibrated.
+    pub fn start(&mut self, update_frequency: Duration) -> anyhow::Result<()> {
         let state = self.state.clone();
         let mode = self.mode.clone();
-        let calibration = self.calibration.clone();
+        let shared = self.calibration.clone();
 
         info!("start");
 
@@ -242,7 +258,14 @@ impl ImuManager {
             .stack_size(8192)
             .name("imu".into())
             .spawn(move || {
-                match Self::imu_task(update_frequency, state, mode, calibration) {
+                let calibrated = shared.read().unwrap().clone();
+                let calibration = match calibrated {
+                    Some(calibration) => Ok(calibration),
+                    None => Self::measure(&mode, update_frequency, CALIBRATION_SAMPLES).inspect(|calibration| {
+                        *shared.write().unwrap() = Some(calibration.clone());
+                    }),
+                };
+                match calibration.and_then(|calibration| Self::imu_task(update_frequency, state, mode, calibration)) {
                     Ok(_) => log::error!("IMU update task terminated."),
                     Err(error) => log::error!("IMU update task FAILED with {:?}.", error),
                 };
@@ -251,7 +274,15 @@ impl ImuManager {
         Ok(())
     }
 
+    /// Calibrates the IMU now, taking samples readings update_frequency apart, holding the caller up while it does.
     pub fn calibrate(&mut self, update_frequency: Duration, samples: usize) -> anyhow::Result<()> {
+        let calibration = Self::measure(&self.mode, update_frequency, samples)?;
+        *self.calibration.write().unwrap() = Some(calibration);
+        Ok(())
+    }
+
+    /// Measures the IMU's calibration, from samples readings update_frequency apart, while it is kept still.
+    fn measure(mode: &Mode, update_frequency: Duration, samples: usize) -> anyhow::Result<Calibration> {
         info!("Calibrate samples={}", samples);
 
         let mut calibration = Calibration::new();
@@ -261,7 +292,7 @@ impl ImuManager {
         for c in 0..samples {
             let now = Instant::now();
 
-            match &self.mode {
+            match mode {
                 Mode::Gyro(gyro) => {
                     #[cfg(feature = "ahrs")]
                     let reading_deg = gyro.read_gyro_deg()?;
@@ -366,7 +397,7 @@ impl ImuManager {
         }
 
         // For the moment I am just averaging the magnetometer but this is not what we really need.
-        match &self.mode {
+        match mode {
             Mode::Gyro(_gyro) => {
                 #[cfg(feature = "ahrs")]
                 {
@@ -408,8 +439,7 @@ impl ImuManager {
 
         info!("Done calibration={:?} min={:?} max={:?}", calibration, min, max);
 
-        self.calibration = calibration;
-        Ok(())
+        Ok(calibration)
     }
 
     #[cfg(feature = "ahrs")]
