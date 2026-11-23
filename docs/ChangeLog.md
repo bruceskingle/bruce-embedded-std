@@ -16,6 +16,8 @@
   another VLAN, which a router passes the query to, gets the answer.
 - The mDNS responder's thread has a stack large enough for several services, rather than overflowing and restarting
   the board.
+- The simulator builds on Linux without Wayland's development package, loading Wayland's and X11's libraries when it
+  runs, rather than linking them, so that it also runs where there is only one of them.
 - A `bool` setting never set, e.g. on a new device, is read as false, or None if optional, rather than failing with
   "Invalid type".
 
