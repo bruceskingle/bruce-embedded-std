@@ -1,5 +1,24 @@
 # ChangeLog
 
+# Release 0.3.0
+
+## New
+
+- The mDNS responder advertises the device as services, `MdnsService`, each with its TXT record, `MdnsTxt`, whose
+  facts the firmware can change while it runs: `_bruce-device._tcp`, `SERVICE_TYPE`, by which an app or a flasher
+  finds the boards on the network and what each is, and `_http._tcp`, `HTTP_SERVICE_TYPE`, for its web page.
+- The IMU calibrates itself in its own thread when started, rather than holding the board up for a few seconds;
+  `is_calibrated` says when its readings mean something.
+
+## Fixed
+
+- The mDNS responder answers the asker directly as well as by multicast, so that a computer on another network, e.g.
+  another VLAN, which a router passes the query to, gets the answer.
+- The mDNS responder's thread has a stack large enough for several services, rather than overflowing and restarting
+  the board.
+- A `bool` setting never set, e.g. on a new device, is read as false, or None if optional, rather than failing with
+  "Invalid type".
+
 # Release 0.2.0
 
 ## New
